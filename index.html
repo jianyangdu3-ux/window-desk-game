@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同人文小游戏 · 考研单词融合版 v5.3</title>
+<style>
+  :root{
+    --paper:#f6eddb; --paper2:#efe2ca; --cream:#fffaf0;
+    --ink:#403725; --ink2:#6c5f49; --dim:#9b8a6e;
+    --orange:#dd924e; --orange-d:#c2763a;
+    --green:#5f8466; --rose:#c87a83; --gold:#d6a23f;
+    --bg1:#f4ead6; --bg2:#e9d9bd;
+    --he:#5f8466; --be:#c87a83;
+    --panel:rgba(255,250,240,.72); --line:rgba(95,70,40,.16);
+    --shadow:0 12px 34px rgba(120,90,50,.14); --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:radial-gradient(120% 120% at 50% 0%,var(--bg2),var(--bg1));
+    color:var(--ink); display:flex; justify-content:center; padding:24px 16px; min-height:100vh;}
+  .app{width:100%; max-width:580px;}
+  h1{font-size:21px; text-align:center; font-weight:700; letter-spacing:1px;
+     background:linear-gradient(90deg,var(--gold),var(--rose));
+     -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .sub{text-align:center; color:var(--dim); font-size:12.5px; margin-top:6px; margin-bottom:12px; line-height:1.6}
+  .topbar{display:flex; gap:8px; margin-bottom:12px;}
+  .topbar button{flex:1; background:var(--panel); border:1px solid var(--line); color:var(--dim);
+     padding:9px; border-radius:10px; cursor:pointer; font-size:12.5px; transition:.18s;}
+  .topbar button.on{border-color:var(--gold); color:var(--gold); background:rgba(244,201,93,.12);}
+  .scale{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:12px;}
+  .scale .lab{display:flex; justify-content:space-between; font-size:12px; color:var(--dim); margin-bottom:8px;}
+  .scale .lab b{color:var(--he)} .scale .lab i{color:var(--be); font-style:normal}
+  .track{position:relative; height:10px; border-radius:99px; background:linear-gradient(90deg,var(--be),#5a4a7a,var(--he));}
+  .needle{position:absolute; top:-4px; width:4px; height:18px; border-radius:99px; background:#fff; box-shadow:0 0 10px #fff; transform:translateX(-50%); transition:left .5s cubic-bezier(.4,1.4,.5,1);}
+  .scale .hint{text-align:center; font-size:12px; color:var(--dim); margin-top:8px; min-height:16px;}
+  .scene{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px; min-height:180px; animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+  .who{font-size:12px; color:var(--gold); letter-spacing:1px; margin-bottom:10px;}
+  .txt{font-size:15px; line-height:1.85; white-space:pre-wrap;}
+  .stats{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; font-size:12px; color:var(--dim)}
+  .stats span{background:rgba(255,255,255,.05); padding:4px 10px; border-radius:99px; border:1px solid var(--line)}
+  .wordcard{margin:14px 0; padding:16px; border-radius:14px; text-align:center;
+            background:linear-gradient(135deg,rgba(244,201,93,.16),rgba(232,127,168,.16)); border:1px solid var(--line);}
+  .wordcard .en{font-size:26px; font-weight:700; letter-spacing:1px;}
+  .wordcard .ph{font-size:13px; color:var(--dim); margin-top:4px;}
+  .wordcard .zh{font-size:14px; color:var(--ink); margin-top:6px;}
+  .qtype{display:inline-block; font-size:11px; color:var(--gold); border:1px solid var(--line);
+     padding:2px 9px; border-radius:99px; margin-bottom:10px;}
+  .speak{display:flex; align-items:center; gap:6px; background:rgba(95,132,102,.12);
+     border:1px solid rgba(95,132,102,.35); color:var(--green); padding:8px 14px; border-radius:10px;
+     cursor:pointer; font-size:14px; margin:6px auto; width:fit-content;}
+  .choices{margin-top:14px; display:flex; flex-direction:column; gap:9px;}
+  .choice{background:linear-gradient(135deg,rgba(244,201,93,.12),rgba(232,127,168,.12));
+          border:1px solid var(--line); color:var(--ink); text-align:left; padding:12px 15px;
+          border-radius:12px; font-size:14px; cursor:pointer; transition:.18s; line-height:1.5;}
+  .choice:hover:not(:disabled){border-color:var(--gold); transform:translateX(3px);}
+  .choice:disabled{cursor:default; opacity:.55;}
+  .choice.ok{border-color:var(--he); background:rgba(123,224,192,.18); opacity:1;}
+  .fav-btn{background:linear-gradient(135deg,rgba(244,201,93,.18),rgba(232,127,168,.18)); border-color:var(--gold);}
+  .fav-btn.fav-on{background:linear-gradient(135deg,rgba(232,127,168,.32),rgba(244,201,93,.28)); border-color:var(--pink-d); color:var(--pink-d); font-weight:700;}
+  .choice.no{border-color:var(--be); background:rgba(199,125,255,.18); opacity:1;}
+  .qinput{width:100%; background:rgba(0,0,0,.25); border:1px solid var(--line); color:var(--ink);
+     padding:12px 14px; border-radius:10px; font-size:16px; margin-top:8px; outline:none;}
+  .qinput:focus{border-color:var(--gold);}
+  .qbtn{margin-top:10px; background:linear-gradient(90deg,var(--gold),var(--rose)); border:none;
+     color:#2a1c44; font-weight:700; padding:11px 18px; border-radius:10px; cursor:pointer; font-size:14px;}
+  .qbtn:hover{filter:brightness(1.08)}
+  .fb{margin-top:12px; font-size:13px; text-align:center; min-height:18px;}
+  .fb.good{color:var(--he)} .fb.bad{color:var(--be)}
+  .mode{display:flex; gap:7px; margin-bottom:12px; flex-wrap:wrap;}
+  .mode button{flex:1; min-width:64px; background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:9px; border-radius:10px; cursor:pointer; font-size:12px; transition:.18s;}
+  .mode button.on{border-color:var(--gold); background:rgba(244,201,93,.15); color:var(--gold);}
+  .card{display:block; width:100%; text-align:left; background:var(--panel); border:1px solid var(--line);
+     color:var(--ink); padding:16px; border-radius:14px; cursor:pointer; margin-bottom:10px; transition:.18s;}
+  .card:hover{border-color:var(--gold); transform:translateY(-2px);}
+  .card h3{font-size:16px; margin-bottom:5px; color:var(--gold);}
+  .card p{font-size:12.5px; color:var(--dim); line-height:1.6;}
+  .card .badge{display:inline-block; font-size:11px; color:var(--he); border:1px solid rgba(123,224,192,.4); padding:1px 8px; border-radius:99px; margin-bottom:6px;}
+  .ending{border-radius:16px; padding:22px; animation:fade .5s ease; text-align:center;}
+  .ending.he{background:linear-gradient(160deg,rgba(123,224,192,.18),rgba(244,201,93,.12)); border:1px solid rgba(123,224,192,.4)}
+  .ending.be{background:linear-gradient(160deg,rgba(199,125,255,.18),rgba(232,127,168,.12)); border:1px solid rgba(199,125,255,.4)}
+  .ending .tag{font-size:13px; letter-spacing:3px; opacity:.85}
+  .ending h2{font-size:23px; margin:8px 0 14px;}
+  .ending p{font-size:14px; line-height:1.85; white-space:pre-wrap; text-align:left;}
+  .restart{margin-top:18px; width:100%; background:linear-gradient(90deg,var(--gold),var(--rose)); border:none; color:#2a1c44; font-weight:700; padding:13px; border-radius:12px; cursor:pointer; font-size:15px;}
+  .restart:hover{filter:brightness(1.08)}
+  .foot{text-align:center; color:var(--dim); font-size:11px; margin-top:14px; line-height:1.6}
+  textarea{width:100%; min-height:90px; background:rgba(0,0,0,.25); border:1px solid var(--line); color:var(--ink);
+     padding:10px; border-radius:10px; font-size:13px; outline:none; font-family:inherit;}
+  .prog{display:flex; gap:16px; margin:12px 0; flex-wrap:wrap; font-size:12px; color:var(--ink2)}
+  .prog .stat{ display:flex; align-items:baseline; gap:5px; }
+  .prog .stat b{ font-size:17px; color:var(--orange-d); font-weight:700; }
+  /* ===== 暖色纸感 · 新增组件 & 浅色适配覆盖 ===== */
+  body{ background:radial-gradient(140% 100% at 50% -8%, #fbf3e2, #f1e3c8 58%, #e7d4b2) fixed; color:var(--ink); }
+  .app{ max-width:600px; }
+  h1{ font-family:"Songti SC","Noto Serif SC","STSong","Source Han Serif SC",serif; font-size:25px; font-weight:700; letter-spacing:2px; color:var(--ink); -webkit-background-clip:initial; background:none; }
+  .sub{ color:var(--ink2); }
+  .topbar{ gap:6px; margin-bottom:14px; }
+  .topbar button{ flex:1; background:var(--panel); border:1px solid var(--line); color:var(--ink2); padding:9px 6px; border-radius:11px; cursor:pointer; font-size:12.5px; transition:.18s; font-weight:600; }
+  .topbar button.on{ border-color:var(--orange); color:#fff; background:linear-gradient(135deg,var(--orange),var(--orange-d)); box-shadow:0 6px 16px rgba(210,120,60,.25); }
+  .scene{ box-shadow:var(--shadow); background:linear-gradient(180deg,rgba(255,251,243,.92),rgba(255,248,236,.84)); border-color:rgba(95,70,40,.14); }
+  .card{ box-shadow:var(--shadow); background:linear-gradient(180deg,rgba(255,251,243,.94),rgba(255,247,233,.86)); border-color:rgba(95,70,40,.14); }
+  .card:hover{ border-color:var(--orange); box-shadow:0 16px 36px rgba(120,90,50,.18); }
+  .card h3{ color:var(--orange-d); }
+  .who{ color:var(--orange-d); }
+  .qtype{ color:var(--orange-d); border-color:rgba(221,146,78,.4); }
+  .scale{ background:linear-gradient(180deg,rgba(255,251,243,.92),rgba(255,248,236,.84)); border-color:rgba(95,70,40,.14); box-shadow:var(--shadow); }
+  .scale .track{ background:linear-gradient(90deg,var(--rose),#e6d6b8,var(--green)); }
+  .needle{ background:var(--ink); box-shadow:0 0 8px rgba(64,55,37,.45); top:-3px; height:16px; }
+  .qinput{ background:rgba(120,95,60,.07); border:1px solid var(--line); color:var(--ink); }
+  .qinput:focus{ border-color:var(--orange); }
+  textarea{ background:rgba(120,95,60,.07); border:1px solid var(--line); color:var(--ink); }
+  .prog span, .stats span{ background:rgba(120,95,60,.08); }
+  .ending.he{ background:linear-gradient(160deg,rgba(95,132,102,.2),rgba(214,162,63,.14)); border-color:rgba(95,132,102,.5); }
+  .ending.be{ background:linear-gradient(160deg,rgba(200,122,131,.2),rgba(232,127,168,.14)); border-color:rgba(200,122,131,.5); }
+  .foot{ color:var(--dim); }
+  .cover{ text-align:center; min-height:calc(100vh - 48px); display:flex; flex-direction:column; justify-content:center; padding:24px 20px; }
+  .cover .kicker{ font-size:11.5px; letter-spacing:5px; color:var(--orange-d); font-weight:700; margin-bottom:6px; }
+  .cover h1{ font-size:33px; margin:16px 0 4px; }
+  .cover .ruleline{ width:72px; height:2px; background:linear-gradient(90deg,var(--orange),var(--rose)); margin:18px auto; border-radius:2px; }
+  .cover .tagline{ color:var(--ink2); font-size:13.5px; line-height:1.95; margin:10px auto 22px; max-width:440px; }
+  .cover .heroline{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin:6px 0 28px; }
+  .cover .heroline span{ font-size:11.5px; color:var(--dim); background:rgba(255,251,243,.7); border:1px solid rgba(95,70,40,.12); padding:5px 12px; border-radius:99px; }
+  .cover .cta{ display:flex; flex-direction:column; gap:12px; max-width:280px; margin:0 auto; }
+  .btn-primary{ background:linear-gradient(135deg,var(--orange),var(--orange-d)); color:#fff; border:none; font-weight:700; padding:15px; border-radius:14px; cursor:pointer; font-size:15px; box-shadow:0 10px 24px rgba(210,120,60,.3); transition:.18s; }
+  .btn-primary:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+  .btn-ghost{ background:var(--panel); border:1px solid var(--line); color:var(--ink2); padding:13px; border-radius:14px; cursor:pointer; font-size:14px; transition:.18s; }
+  .btn-ghost:hover{ border-color:var(--orange); color:var(--orange-d); }
+  .cover .progressline{ margin-top:26px; font-size:12px; color:var(--dim); }
+  .today{ background:linear-gradient(135deg,rgba(221,146,78,.16),rgba(95,132,102,.14)); border:1px solid rgba(221,146,78,.35); border-radius:var(--radius); padding:16px; margin-bottom:14px; box-shadow:var(--shadow); }
+  .grp{ font-family:"Songti SC","Noto Serif SC",serif; font-size:13px; font-weight:700; color:var(--orange-d); letter-spacing:2px; margin:18px 2px 8px; display:flex; align-items:center; gap:8px; }
+  .grp::after{ content:""; flex:1; height:1px; background:linear-gradient(90deg,rgba(221,146,78,.4),transparent); }
+  .sec-title{ font-family:"Songti SC","Noto Serif SC",serif; font-size:13px; font-weight:700; color:var(--orange-d); letter-spacing:2px; margin:16px 2px 8px; }
+  .pack-chips{ display:flex; flex-wrap:wrap; gap:7px; margin:2px 0 0; }
+  .chip{ font-size:12.5px; padding:4px 11px; border-radius:999px; background:rgba(221,146,78,.14); border:1px solid rgba(221,146,78,.4); color:var(--ink); }
+  .chip-ghost{ background:transparent; border:1px dashed rgba(60,67,60,.3); color:var(--dim); }
+  .field{ margin:9px 0; }
+  .field label{ display:block; font-size:12px; color:var(--dim); margin-bottom:4px; }
+  .field .qinput{ width:100%; box-sizing:border-box; padding:8px 10px; font-size:13px; }
+  .cloud-row{ display:flex; gap:8px; margin-top:11px; }
+  .cloud-row .choice{ flex:1; }
+  .cloud-msg{ font-size:12.5px; margin-top:9px; color:var(--ink2); min-height:16px; }
+  .today .tl{ font-size:12px; letter-spacing:2px; color:var(--orange-d); font-weight:700; margin-bottom:8px; }
+  .today .tstats{ display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 12px; }
+  .today .tstats span{ background:rgba(255,255,255,.6); border:1px solid var(--line); color:var(--ink2); font-size:12px; padding:5px 11px; border-radius:99px; }
+  .today .tip{ font-size:12.5px; color:var(--ink2); line-height:1.7; margin-bottom:4px; }
+  .chars{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:6px; }
+  .char{ background:linear-gradient(180deg,rgba(255,251,243,.96),rgba(255,247,233,.9)); border:1px solid var(--line); border-radius:var(--radius); padding:16px; text-align:center; box-shadow:var(--shadow); }
+  .char svg{ width:82px; height:82px; display:block; margin:0 auto; }
+  .zface{ display:flex; justify-content:center; margin:8px 0 2px; } .zface svg{ width:86px; height:86px; display:block; }
+  .char h3{ font-family:"Songti SC","Noto Serif SC",serif; font-size:18px; margin:8px 0 2px; color:var(--ink); }
+  .char .role{ font-size:11.5px; color:var(--orange-d); margin-bottom:8px; letter-spacing:1px; }
+  .char p{ font-size:12px; color:var(--ink2); line-height:1.7; text-align:left; }
+  .char .traits{ display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+  .char .traits span{ font-size:10.5px; color:var(--green); border:1px solid rgba(95,132,102,.4); padding:2px 7px; border-radius:99px; }
+  .ach{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px; }
+  .badge{ border:1px solid var(--line); border-radius:13px; padding:13px; background:var(--panel); text-align:center; box-shadow:var(--shadow); }
+  .badge .ic{ font-size:22px; }
+  .badge .nm{ font-size:13.5px; font-weight:700; margin-top:4px; color:var(--ink); }
+  .badge .ds{ font-size:11px; color:var(--ink2); margin-top:3px; line-height:1.5; }
+  .badge.locked{ opacity:.5; filter:grayscale(.6); }
+  .badge .lock{ font-size:11px; color:var(--dim); margin-top:2px; }
+  .about h2{ font-family:"Songti SC","Noto Serif SC",serif; font-size:17px; color:var(--ink); margin:14px 0 6px; }
+  .about p, .about li{ font-size:13px; color:var(--ink2); line-height:1.85; }
+  .about ul{ padding-left:18px; margin:4px 0; }
+  .about .q{ color:var(--orange-d); font-weight:700; }
+  /* ===== 设置 / 打字机光标 ===== */
+  .linkbtn{ background:none; border:none; color:var(--dim); font-size:12px; cursor:pointer; padding:5px 10px; border-radius:9px; margin-top:4px; transition:.18s; }
+  .linkbtn:hover{ color:var(--orange-d); background:rgba(221,146,78,.08); }
+  .cover .coverfoot{ margin-top:16px; }
+  .tw-c{ color:var(--orange-d); animation:blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  /* ===== 动效 · 入场 · 移动端 · 无障碍 ===== */
+  @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+  .choice.ok{ animation:pop .45s ease; }
+  @keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+  .choice.no{ animation:shakeX .5s ease; }
+  .wordcard.ok{ animation:pop .45s ease; box-shadow:0 0 0 2px var(--he) inset, var(--shadow); }
+  .wordcard.no{ animation:shakeX .5s ease; box-shadow:0 0 0 2px var(--be) inset, var(--shadow); }
+  @keyframes rise{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none}}
+  .scene{ animation:rise .5s ease both; }
+  .cover>*{ animation:rise .6s ease both; }
+  .cover .kicker{ animation-delay:.02s } .cover h1{ animation-delay:.08s } .cover .ruleline{ animation-delay:.14s } .cover .tagline{ animation-delay:.2s } .cover .heroline{ animation-delay:.26s } .cover .cta{ animation-delay:.32s } .cover .progressline{ animation-delay:.4s }
+  .card{ animation:rise .45s ease both; }
+  .card:nth-of-type(1){ animation-delay:.03s }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+  @media (max-width:480px){
+    body{ padding:14px 10px; }
+    .app{ max-width:100%; }
+    h1{ font-size:20px; }
+    .cover{ min-height:calc(100vh - 28px); padding:14px 10px; }
+    .cover h1{ font-size:26px; }
+    .scene{ padding:16px; }
+    .card{ padding:13px; }
+    .card h3{ font-size:15px; }
+    .card p{ font-size:12px; }
+    .char svg{ width:70px; height:70px; }
+    .char p{ font-size:11px; }
+    .wordcard .en{ font-size:23px; }
+    .txt{ font-size:14px; }
+    .topbar button{ padding:8px 4px; font-size:11.5px; }
+    .today{ padding:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="root"></div>
+</div>
+<script src="words.js"></script>
+<script>
+const BANK = (typeof WORDS !== 'undefined' && WORDS.length) ? WORDS : [["due", "/dju:/", "a.(to)应支付的;(车,船等)预定应到达的"], ["alleviate", "/ə'li:vieit/", "v.减轻，缓和，缓解(痛苦等)"], ["weave", "/wi:v/", "v.编(织) n.编织法，编织式样"], ["drawing", "/'drɔ:iŋ/", "n.绘图,图样"], ["snow", "/snəu/", "n.雪，下雪 vi.下雪；如雪一般地落下"], ["realistic", "/ˌriə'listik/", "a.现实(主义)的"], ["nevertheless", "/ˌnevəðə'les/", "conj.(nonetheless)然而,不过ad.仍然,不过"], ["ride", "/raid/", "v./n.骑,乘"], ["expression", "/ɪk'spreʃn/", "n.表达;表情;声调;腔调;榨出;措词;式;符号"], ["spur", "/spə:/", "n.靴刺,马刺;刺激,刺激物 v.刺激,激励"], ["clutch", "/klʌtʃ/", "v.抓住,攫住,掌握 n.离合器"], ["pest", "/pest/", "n.害虫"], ["standard", "/'stændəd/", "n.标准,规则 a.标准的"], ["compass", "/'kʌmpəs/", "n.罗盘,指南针;(pl.)圆规"], ["gloomy", "/'glu:mi/", "a.阴暗的,阴沉的,令人沮丧的,阴郁的"], ["fortunate", "/'fɔ:tʃənit/", "a.幸运的,侥幸的"], ["spectacular", "/spek'tækjulə/", "a.壮观的,引人注目的 n.壮观的演出"], ["nutrition", "/nju:'triʃən/", "n.营养,营养学"], ["anonymous", "/ə'nɔniməs/", "a.匿名的，无名的，姓氏不明的"], ["pat", "/pæt/", "v./n.轻拍,轻打,抚摸"], ["speech", "/spi:tʃ/", "n.演说,讲话;言语,语言"], ["tile", "/tail/", "n.瓦片,瓷砖 vt.铺瓦于，贴砖于"], ["dorm", "/dɔ:m/", "n.(dormitory)［美］［口］宿舍"], ["dictionary", "/'dikʃənəri/", "n.词典,字典"], ["screen", "/skri:n/", "n.屏幕,屏风;帘 v.掩蔽,包庇;筛选"], ["lover", "/'lʌvə(r)/", "n.爱好者;(pl.)情侣"], ["shirt", "/ʃə:t/", "n.衬衫"], ["emphasize", "/'emfəsaiz/", "v.(emphasise)强调"], ["pollution", "/pə:'lju:ʃən/", "n.污染"], ["shepherd", "/'ʃepəd/", "n.牧民,牧羊人"], ["foster", "/'fɔstə/", "vt.养育;收养;怀抱;鼓励 a.收养的 n.养育者"], ["favorite", "/'feivərit/", "n.(favourite)最喜欢的人或物 a.喜爱的"], ["technology", "/tek'nɔlədʒi/", "n.科学技术；工业技术；应用科学"], ["wipe", "/waip/", "v./n.擦,揩,抹"], ["scold", "/skəuld/", "v.责骂,训斥"], ["dessert", "/di'zə:t/", "n.正餐后的水果或甜食"], ["outlet", "/'autlet/", "n.出路,出口;销路,市场;发泄方法;电源插座"], ["list", "/lɪst/", "n.表,目录,名单 v.把…编列成表,列入表内"], ["important", "/im'pɔ:tənt/", "a.重要的,重大的;有地位的,有权力的"], ["fatigue", "/fə'ti:g/", "n./v.(使)疲劳"], ["insure", "/in'ʃuə/", "vt.保险,给…保险;保证"], ["vicious", "/'viʃəs/", "a.恶毒的,凶残的,邪恶的"], ["tame", "/teim/", "a.驯服的,温顺的;沉闷的,乏味的 vt.驯服"], ["vapour", "/'veɪpə(r)/", "n.(vapor)汽，(水)蒸气"], ["fold", "/fəuld/", "v.折叠;合拢;抱住 n.褶,褶痕;羊栏;信徒"], ["rain", "/rein/", "n.雨；雨天；下雨 vi.下雨 vt.使大量落下"], ["monster", "/'mɔnstə/", "n.怪物,妖怪,畸形的动植物"], ["injure", "/'indʒə/", "v.损害,损伤,伤害"], ["pass", "/pɑ:s/", "v.经/通/穿/度过；传递 n.通行证；考试及格"], ["astonish", "/ə'stɔniʃ/", "vt.使惊讶，使吃惊"], ["component", "/kəm'pəunənt/", "n.组成部分,成分,元件 a.组成的,合成的"], ["tea", "/ti:/", "n.茶(叶)；午后茶点"], ["mountain", "/'mauntin/", "n.山"], ["small", "/smɔ:l/", "a.小的；年幼的；不重要的；小规模(经营)的"], ["isolate", "/'aisəleit/", "vt.隔离,孤立"], ["administer", "/əd'ministə/", "v.施行，实施；掌管，料理...的事务；给予"], ["trail", "/treil/", "n.踪迹,痕迹;小路 v.追踪,跟踪;拖,拖曳;"], ["hospital", "/'hɔspitəl/", "n.医院"], ["elegant", "/'elɪgənt/", "a.优雅的;端庄的;雅致的"], ["conversation", "/ˌkɒnvə'seɪʃn/", "n.会话,谈话"], ["interest", "/'ɪntrəst/", "n.(in)兴趣,重要性;利益v.(in)使发生兴趣"], ["naughty", "/'nɔ:ti/", "a.顽皮的,淘气的"], ["trolley", "/'trɔli/", "n.手推车;(英)无轨电车,(美)有轨电车"], ["fork", "/fɔ:k/", "n.叉,耙;叉形物;餐叉"], ["awake", "/ə'weik/", "a.醒着的 vt.唤醒，使觉醒 vi.醒来，醒悟到"], ["away", "/ə'wei/", "ad.在远处；离开；渐渐远去；一直；去掉"], ["banana", "/bə'nɑ:nə/", "n.香蕉"], ["unlikely", "/ˌʌn'laikli/", "a.未必的,靠不住的"], ["temporary", "/'tempərəri/", "a.暂时的,临时的"], ["advance", "/əd'vɑ:ns/", "n.前进，预付 vi.前进，进展 vt.促进，推进"], ["locality", "/ləu'kæləti/", "n.位置,地点"], ["eccentric", "/ik'sentrik/", "a.古怪的，怪癖的，异乎寻常的n.古怪的人"], ["parasite", "/'pærəsaɪt/", "n.寄生虫,食客"], ["minister", "/'ministə/", "n.部长,大臣"], ["musical", "/'mju:zikəl/", "a.音乐的;有音乐才能的 n.音乐片"], ["fairly", "/'fεəli/", "ad.公正地,正当地;相当,还算"], ["wish", "/wiʃ/", "v.希望；但愿；祝 n.愿望，希望；[pl.]祝愿"], ["character", "/'kærəktə/", "n.性格,品质,特性;人物,角色;字符,(汉)字"], ["install", "/in'stɔ:l/", "vt.(instal)安装,设置,安置；使就职,任命"], ["danger", "/'deindʒə/", "n.危险;威胁;危险事物"], ["piece", "/pi:s/", "n.(一)件/片/篇;碎片v.(together)拼合,拼凑"], ["abstract", "/'æbstrækt/", "a.抽象的 n.摘要，梗概 vt.提取；摘录要点"], ["cook", "/kuk/", "n.厨师 v.烹调，烧煮；纂改(账目)，捏造"], ["explain", "/ik'splein/", "v.解释,说明"], ["lucky", "/'lʌki/", "a.幸运的,侥幸的"], ["governor", "/'gʌvənə/", "n.统治者,管理者,总督,州(省)长"], ["unusual", "/ˌʌn'ju:ʒuəl/", "a.不平常的,与众不同的"], ["membership", "/'membəʃɪp/", "n.会员资格,成员资格"], ["identify", "/aɪ'dentɪfaɪ/", "v.识别,鉴别;(with)把…和…看成一样"], ["generous", "/'dʒenərəs/", "a.宽宏大量的,慷慨的"], ["sick", "/sɪk/", "a.有病的,患病的;恶心的,想吐的"], ["fridge", "/fridʒ/", "n.(refrigerator的略语)冰箱"], ["beast", "/bi:st/", "n.兽,牲畜;凶残的人,举止粗鲁的人"], ["manager", "/'mænidʒə/", "n.经理,管理人"], ["tray", "/trei/", "n.盘,碟,托盘"], ["creep", "/kri:p/", "v.爬,爬行;(植物)蔓延"], ["conscious", "/'kɔnʃəs/", "a.(of)意识到的,自觉的;神志清醒的"], ["afternoon", "/ˌɑ:ftə:'nu:n/", "n.下午，午后"], ["maneuver", "/mə'nu:və/", "n.(manoeuvre)机动;运用,操作; v.机动"], ["marginal", "/'mɑ:dʒɪnl/", "a.记在页边的,旁注的;(意识)边缘的"], ["liberal", "/'libərəl/", "a.慷慨的,大方的;富足的;自由的,思想开放的"], ["wait", "/weit/", "v.(for)等待；(on)侍候 n.等候，等待时间"], ["waterfall", "/'wɔ:təfɔ:l/", "n.瀑布"], ["steep", "/sti:p/", "a.陡峭，险峻的；急剧升降的vt.浸泡,沉浸"], ["pig", "/pɪg/", "n.猪，猪肉；猪一般的人(指肮脏，贪吃的人)"], ["temperament", "/'tempərəmənt/", "n.气质，性格，性情；资质"], ["fist", "/fɪst/", "n.拳头 vt.用拳头打；紧握"], ["search", "/sə:tʃ/", "v./n.(for)搜索,寻找,探查"], ["account", "/ə'kaunt/", "a.叙述，说明；账目，账户 vi.说明，解释"], ["depth", "/depθ/", "n.深，深度,深奥,深刻"], ["local", "/'ləukəl/", "a.地方的,当地的;局部的"], ["utilize", "/'ju:tilaiz/", "vt.利用"], ["punish", "/'pʌniʃ/", "v.惩罚,处罚"], ["fault", "/fɔ:lt/", "n.过失,过错;缺点,毛病"], ["proficiency", "/prəu'fiʃənsi/", "n.(in)熟练,精通"], ["spite", "/spait/", "n.恶意;怨恨"], ["annual", "/'ænjuəl/", "a.每年的，一年生的 n.年刊；一年生植物"], ["scholar", "/'skɔlə/", "n.学者"], ["fundamental", "/ˌfʌndə'mentəl/", "a.基础的,基本的 n.(pl.)基本原则,基本原理"], ["manage", "/'mænɪdʒ/", "v.经营,管理,处理;设法,对付;操纵,运用"], ["cage", "/keidʒ/", "n.鸟笼"], ["crisis", "/'kraisis/", "n.(pl.crises)危机,紧要关头"], ["veil", "/veil/", "n.面纱,遮蔽物 v.用面纱掩盖,掩饰"], ["awe", "/ɔ:/", "n.敬畏，惊惧vt.使敬畏，使惊惧"], ["privacy", "/'praivəsi/", "n.(不受干扰的)独处，自由，隐私；私生活"], ["poem", "/'pəuim/", "n.诗"], ["spaceship", "/'speisʃip/", "n.宇宙飞船"], ["remark", "/ri'mɑ:k/", "n.(about,on)评语,意见 v.(on)评论;注意到"], ["anything", "/'eniθiŋ/", "pron.任何东西(事物)；无论什么东西(事物)"], ["tangle", "/'tæŋgl/", "n.纠缠；缠结；混乱 v.(使)缠绕；变乱"], ["mistress", "/'mistris/", "n.女主人;主妇;情妇,情人"], ["temperature", "/'temprətʃə(r)/", "n.温度，体温；热度，发烧"], ["lecture", "/'lektʃə/", "n./v.演讲,讲课"], ["fix", "/fiks/", "v.(使)固定;修理;安装;决定;注视 n.困境"], ["examine", "/ig'zæmin/", "v.检查,调查;对…进行考试"], ["destination", "/ˌdesti'neiʃən/", "n.目的地,终点"], ["polish", "/'pɔliʃ/", "v.磨光,擦亮;使优美,润饰 n.擦光剂,上光蜡"], ["pill", "/pil/", "n.药丸"], ["rape", "/reip/", "n./vt.掠夺,蹂躏,强奸"], ["consolidate", "/kən'sɔlideit/", "v.使加固，使加强；(把...)联为一体，合并"], ["block", "/blɒk/", "n.大块木（石）料;街区;障碍物 v.阻塞,拦阻"], ["software", "/'sɔftwεə/", "n.软件"], ["wind", "/wɪnd/", "n.风;气息 v.转动;缠绕;上发条,;蜿蜒而行"], ["fabulous", "/'fæbjuləs/", "a.极好的；极为巨大的；寓言中的，传说中的"], ["ethnic", "/'eθnik/", "a.种族的；人种学的"], ["inspire", "/in'spaiə/", "vt.鼓舞,激起;使产生灵感"], ["register", "/'redʒistə/", "n./v.登记,注册 v.(仪表等)指示,(邮件)挂号"], ["emperor", "/'empərə/", "n.皇帝"], ["escort", "/'eskɔ:t/", "vt.护送(卫)；陪同 n.警卫，护送者；仪仗兵"], ["theme", "/θi:m/", "n.题目，主题；主旋律，基调"], ["romantic", "/rəu'mæntik/", "a.浪漫的,传奇式的;不切实际的,好幻想的"], ["tobacco", "/tə'bækəu/", "n.烟草,烟叶"], ["expire", "/ik'spaiə/", "v.期满,(期限)终止;呼气;断气,死亡"], ["sharp", "/ʃɑ:p/", "a.锋利的;轮廓分明的;急转的ad.(指时刻)正"], ["teenager", "/'ti:nˌeidʒə/", "n.十几岁的青少年"], ["pessimistic", "/ˌpesi'mistik/", "a.悲观(主义)的"], ["exception", "/ik'sepʃən/", "n.例外,除外;反对;异议"], ["mostly", "/'məustli/", "ad.几乎全部地;主要地,大部分,基本上"], ["along", "/ə'lɔŋ/", "ad.向前；和...一起，一同 prep.沿着，顺着"], ["patriotic", "/ˌpætri'ɔtik/", "a.爱国的"], ["dye", "/dai/", "n.染料 v.染,染色"], ["reassure", "/ˌri:ə'ʃuə/", "v.使安心，使放心；使消除疑虑"], ["verse", "/və:s/", "n.韵文,诗;诗节,诗句"], ["normalization", "/ˌnɔ:məlai'zeiʃən/", "n.(normalisation)正常化,标准化"], ["employ", "/im'plɔi/", "n./v.雇用;用,使用"], ["significance", "/sig'nifikəns/", "n.意义,含义;重要性,重要的"], ["absolute", "/'æbsəlju:t/", "a.绝对的，完全的；确实的，肯定的"], ["finance", "/fai'næns/", "n.财政,金融 v.为…提供资金"], ["shipment", "/'ʃɪpmənt/", "n.装船,装运;装载的货物,装货量"], ["muscular", "/'mʌskjulə/", "a.肌肉的;肌肉发达的;强健的"], ["damp", "/dæmp/", "n.潮湿 a.潮湿的 vt.使潮湿;使衰减"], ["paperback", "/'peipəbæk/", "n.平装本，简装本"], ["wreck", "/rek/", "n.失事船(或飞机)v.(船等)失事,遇难;破坏"], ["drive", "/draiv/", "v.开(车);驱;驱动,把(钉,桩)打入 n.驾驶"], ["scissors", "/'sizəz/", "n.剪子"], ["alive", "/ə'laiv/", "a.活着的；存在的；活跃的；(to)敏感的"], ["exterior", "/ik'stiəriə/", "a.外部的,外面的 n.外部"], ["found", "/faund/", "vt.建立;创立;创办;使有根据;铸造;熔制"], ["auxiliary", "/ɔ:g'ziljəri/", "a.辅助的，支援的 n.辅助者，辅助设备"], ["lavatory", "/'lævətəri/", "n.厕所,盥洗室"], ["constrain", "/kən'strein/", "vt.限制，约束；克制，抑制"], ["clap", "/klæp/", "v.拍手,拍,轻拍 n.拍(手),掌声,霹雳声"], ["lens", "/lenz/", "n.透镜,镜头"], ["scrutiny", "/'skru:tini/", "n.周密的调查；仔细看；监视；选票复查"], ["strike", "/straik/", "n./vi.罢工 vt.打，击；攻击；给…深刻印象"], ["cereal", "/'siəriəl/", "n.加工而成的谷类食物；谷类植物，谷物"], ["plain", "/plein/", "a.明白的;朴素的;坦率;平凡 n.平原,旷野"], ["gratitude", "/'grætɪtju:d/", "n.感激,感谢"], ["opera", "/'ɔpərə/", "n.歌剧"], ["electricity", "/ˌilek'trisəti/", "n.电,电流;电学"], ["potential", "/pəu'tenʃəl/", "a.潜在的,可能的 n.潜能,潜力"], ["quilt", "/kwilt/", "n.被子"], ["these", "/ði:z/", "pron.&a.[this的复数]这些；这些人(东西)"], ["slack", "/slæk/", "a.懈怠的,松驰的;萧条的 n.淡季;(pl.)便裤"], ["spectrum", "/'spektrəm/", "n.谱，光谱，频谱；范围，幅度，系列"], ["serve", "/sə:v/", "v.服务,尽责;招待,侍候;符合,适用"], ["instinct", "/'instiŋkt/", "n.本能,直觉,天性"], ["unite", "/ju:'nait/", "vi.联合,团结;统一,合并vt.使联合"], ["sufficient", "/sə'fiʃənt/", "a.(for)足够的,充分的(比enough拘谨、正式)"], ["major", "/'meidʒə/", "a.主要的n.成年人,专业学生,主修课程v.主修"], ["slice", "/slais/", "n.薄片,切片;一份;部分切(片)"], ["satisfactory", "/ˌsætis'fæktəri/", "a.令人满意的,圆满的,良好的,符合要求的"], ["kid", "/kid/", "n.小孩,儿童 v.戏弄,取笑"], ["lunch", "/lʌntʃ/", "n.午餐，(美)便餐"], ["coherent", "/kəu'hɪərənt/", "a.一致的，协调的；(话语等)条理清楚的"], ["thrift", "/θrift/", "a.节约，节俭"], ["chest", "/tʃest/", "n.胸腔,胸膛;箱,柜"], ["articulate", "/ɑ:'tɪkjuleɪt/", "a.善于表达的；有关节相连的 v.清楚地讲话"], ["e-mail", "/i: meɪl/", "n.(electronic mail)电子信函，电子邮件"], ["brass", "/brɑ:s/", "n.黄铜,铜器"], ["acquisition", "/ˌækwɪ'zɪʃn/", "n.取得，学到，养成(习惯)；获得的东西"], ["dial", "/'daiəlˌ dail/", "n.钟(表)面,刻度盘,拨号盘 v.拨号,打电话"], ["eternal", "/i'tə:nəl/", "n.永久的,永恒的"], ["historical", "/his'tɔrikəl/", "a.历史的;有关历史的"], ["lumber", "/'lʌmbə/", "n.木材,木料"], ["motion", "/'məuʃn/", "n.运动,动;提议,动议 v.提议,动议"], ["breed", "/bri:d/", "v.(使)繁殖,生殖;产生;教养,抚养 n.品种"], ["organism", "/'ɔ:gənizəm/", "n.生物，有机体"], ["theirs", "/ðεəz/", "pron.[they的物主代词]他(她、它)们的"], ["taste", "/teist/", "v.品尝;(of)有…味道;体验 n.滋味;味觉"], ["educate", "/'edju:keit/", "v.教育,培养,训练"], ["hello", "/he'ləu/", "int.英(美)喂,你好(用来打招呼或引起注意)"], ["accessory", "/ək'sesəri/", "n.附件,附属品;(为全套衣服增加美感的)服饰"], ["far", "/fɑ:/", "a./ad.远，久远，遥远 ad.到…程度，…得多"], ["dismay", "/dis'mei/", "n./v.(使)沮丧;(使)惊慌;(使)失望,(使)绝望"], ["evoke", "/i'vəuk/", "vt.唤起(回忆、感情等)；引起"], ["metaphor", "/'metəfə/", "n.隐喻，暗喻"], ["wit", "/wɪt/", "n.智力,才智,智慧"], ["story", "/'stɔ:ri/", "n.故事,传说,小说;(=storey)楼层"], ["parameter", "/pə'ræmitə/", "n.参数,参量"], ["cunning", "/'kʌniŋ/", "a./n.狡猾(的),狡诈(的)"], ["axis", "/'æksis/", "n.轴，轴线，中心线；坐标轴，基准线"], ["strive", "/straiv/", "v.奋斗,努力"], ["lamp", "/læmp/", "n.灯"], ["envisage", "/in'vizidʒ/", "v.想象，设想，展望，正视"], ["accuse", "/ə'kju:z/", "vt.控告，指责 vi.指控，指责"], ["fail", "/feil/", "v.失败,不及格;衰退,减弱"], ["comply", "/kəm'plai/", "v.(with)遵照，照做，应允；顺从，服从"], ["deceit", "/di'si:t/", "n.欺骗,欺骗行为"], ["dash", "/dæʃ/", "v./n.冲,猛冲,突进 n.破折号"], ["oven", "/'ʌvən/", "n.炉,灶,灶箱"], ["conduct", "/'kɔndʌkt/", "n.行为,品行 v.引导;管理;指挥(乐队);传导"], ["assault", "/ə'sɔ:lt/", "v.猛烈地攻击，袭击 n.突然而猛烈的攻击"], ["worldwide", "/'wə:ldˌwaid/", "a.全世界的,世界范围的 ad.遍及全世界"], ["lower", "/'ləuə/", "a.较低的,下级的,下游的 v.降下,放低"], ["seed", "/si:d/", "n.种子 v.播种;结实,结籽"], ["percentage", "/pə'sentidʒ/", "n.百分数,百分率,百分比"], ["tire", "/'taiə/", "v.(使)疲倦,(使)厌倦 n.(=tyre)轮胎,车胎"], ["tough", "/tʌf/", "a.坚韧的,棘手的;强健的,吃苦耐劳的;粗暴的"], ["uncover", "/ˌʌn'kʌvə/", "v.揭开,揭露"]];
+
+/* ============ 进度 / 错词本 / 碎片（localStorage） ============ */
+const PK='kaoyan_prog_v1';
+function loadP(){ try{ const p=JSON.parse(localStorage.getItem(PK)); if(!p) return {words:{},custom:[],fav:[],frag:0,dailyDate:''}; p.words=p.words||{}; p.custom=p.custom||[]; p.fav=p.fav||[]; return p; }catch(e){ return {words:{},custom:[],fav:[],frag:0,dailyDate:''}; } }
+function saveP(p){ try{ localStorage.setItem(PK, JSON.stringify(p)); }catch(e){} }
+function getSfx(){ try{ return !!(loadP().sfx); }catch(e){ return false; } }
+function setSfx(v){ const p=loadP(); p.sfx=!!v; saveP(p); }
+let _actx=null;
+function _audio(){ try{ if(!_actx) _actx=new (window.AudioContext||window.webkitAudioContext)(); if(_actx.state==='suspended') _actx.resume(); return _actx; }catch(e){ return null; } }
+function _tone(freq, dur, type, gain){ if(!getSfx()) return; const a=_audio(); if(!a) return; const o=a.createOscillator(), g=a.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(a.destination); const t=a.currentTime; g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(gain||0.05,t+0.012); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.03); }
+function sfxClick(){ _tone(380,0.07,'triangle',0.045); }
+function sfxGood(){ _tone(660,0.12,'sine',0.055); setTimeout(function(){ _tone(880,0.16,'sine',0.045); },80); }
+function sfxBad(){ _tone(170,0.2,'sawtooth',0.035); }
+function record(en, ok){
+  const p=loadP();
+  if(!p.words[en]) p.words[en]={c:0,w:0,seen:Date.now(),interval:0,due:Date.now(),ease:2.5};
+  const r=p.words[en]; const DAY=86400000;
+  if(ok){
+    r.c++;
+    if(r.c===1) r.interval=1;
+    else if(r.c===2) r.interval=3;
+    else r.interval=Math.max(1, Math.round(r.interval*r.ease));
+    r.ease=Math.min(3.0, r.ease); // 答对不降难度
+    r.w=Math.max(0,(r.w||0)-1);   // 连续答对，逐渐移出错词本
+  } else {
+    r.c=0; r.interval=1; r.ease=Math.max(1.3, r.ease-0.2); // 答错重置、降难度
+    r.w=(r.w||0)+1;               // 答错累计，进入「他的错题本」
+  }
+  r.seen=Date.now(); r.due=r.seen+r.interval*DAY; // 下次到期=现在+间隔天
+  saveP(p);
+}
+function stat(){ const p=loadP(); let mastered=0, wrong=0;
+  for(const k in p.words){ const w=p.words[k]; if(w.c>=3 && w.w===0) mastered++; if(w.w>0) wrong++; }
+  return {mastered, wrong, total:Object.keys(p.words).length};
+}
+function findWord(en){ return BANK.find(w=>w[0]===en); }
+function unmastered(){ const p=loadP(); return BANK.filter(w=>{const r=p.words[w[0]]; return !r||r.c<3;}); }
+function dueCount(){ const p=loadP(); const n=Date.now(); let k=0; for(const e in p.words){ const r=p.words[e]; if(r.c>0 && r.due && r.due<=n) k++; } return k; }
+function dueCandidates(n){
+  const p=loadP(); const now=Date.now();
+  // 候选：未掌握(c<3)，或已掌握但到期需复习(due<=now)
+  const cand=BANK.filter(w=>{ const r=p.words[w[0]]; return !r || r.c<3 || (r.due && r.due<=now); });
+  cand.sort((a,b)=>{ const ra=p.words[a[0]]||{due:0}; const rb=p.words[b[0]]||{due:0}; return (ra.due||0)-(rb.due||0); });
+  return cand.slice(0,n);
+}
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+
+/* ============ 主题词包（按语义把 5488 词分组） ============ */
+const PACK_DEFS={
+  love:   {name:'情绪·心', keys:['爱','情','感','心','喜','怒','惧','焦','柔','温','慰','恋','妒','悲','欣','释','坦','惊']},
+  persist:{name:'坚持·韧', keys:['坚持','努力','忍','奋斗','勤勉','韧','不挠','克服','顽强','持之','毅力']},
+  apart:  {name:'离别·远', keys:['离','别','分','弃','缺','隔','远','散','孤','寂','逝','诀','退','疏']},
+  study:  {name:'求学·知', keys:['学','知','理解','分析','习','读','书','考','研','智','思','识','教','记']},
+  speak:  {name:'言说·达', keys:['说','表达','交','谈','传达','讲','述','语','沟','吐','陈','宣']},
+  hard:   {name:'困顿·阻', keys:['难','失败','阻碍','拒','否','困','挫','险','危','障','窘','压']},
+  nature: {name:'自然·景', keys:['景','山','水','河','海','湖','林','森','树','草','花','叶','风','云','雨','雪','雾','霜','月','星','光','石','沙','波','浪','岸','野','田','春','夏','秋','冬','暖','寒','凉','湿']},
+  time:   {name:'时间·逝', keys:['时','刻','岁','季','朝','夕','久','暂','瞬','古','今','昼','夜','晨','昏','期','限','延','永','昔','候']},
+  career: {name:'事业·成', keys:['职','岗','薪','晋','升','途','展','创','营','商','贸','厂','企','酬','成','功','就','业','谋']}
+};
+const PACKS={general:[]};
+Object.keys(PACK_DEFS).forEach(k=>PACKS[k]=[]);
+function buildPacks(){
+  for(const w of BANK){ const zh=w[2]||'';
+    let hit=null;
+    for(const k in PACK_DEFS){ if(PACK_DEFS[k].keys.some(t=>zh.includes(t))){ hit=k; break; } }
+    if(hit) PACKS[hit].push(w); else PACKS.general.push(w);
+  }
+}
+buildPacks();
+function packList(name){ return PACKS[name]||PACKS.general; }
+function packStats(){ return Object.keys(PACK_DEFS).map(k=>PACK_DEFS[k].name+': '+PACKS[k].length).join(' ｜ '); }
+
+function speak(t){ try{ const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=0.85; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }catch(e){} }
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function distract(en){
+  const cor=findWord(en)?findWord(en)[2]:'';
+  const arr=[]; let g=0;
+  while(arr.length<3 && g++<80){ const w=BANK[Math.floor(Math.random()*BANK.length)]; if(w[2]!==cor && !arr.includes(w[2])) arr.push(w[2]); }
+  return arr;
+}
+/* ============ 真实例句库（例句填空用，杜绝模板别扭句） ============
+   每条 value = 英文句子（含 ___ 挖空，填词原形）｜ 中文翻译。仅当词在此库才出填空题型。*/
+const SENT={
+  'abandon':"He had to ___ his car in the snow and walk home.｜他不得不把车丢弃在雪地里，步行回家。",
+  'ability':"Her ___ to stay calm impressed everyone.｜她保持冷静的能力令所有人印象深刻。",
+  'absence':"The ___ of evidence made the case hard to win.｜证据的缺失让这个案子很难赢。",
+  'absolute':"There was ___ silence in the empty hall.｜空荡荡的大厅里一片死寂。",
+  'absorb':"Plants ___ water through their roots.｜植物通过根部吸收水分。",
+  'abstract':"The painter preferred ___ forms to realistic ones.｜这位画家偏爱抽象形态而非写实。",
+  'abundant':"The region is ___ in natural resources.｜这个地区自然资源丰富。",
+  'abuse':"He tends to ___ his authority when he is angry.｜他生气时往往会滥用权威。",
+  'accept':"I ___ your apology and we can move on.｜我接受你的道歉，我们可以继续了。",
+  'access':"Students have free ___ to the library.｜学生可免费使用图书馆。",
+  'accident':"The traffic ___ was caused by heavy rain.｜这场交通事故由大雨引起。",
+  'accompany':"She offered to ___ her friend to the hospital.｜她主动陪朋友去了医院。",
+  'accomplish':"We hope to ___ our goal ahead of schedule.｜我们希望提前完成目标。",
+  'account':"Please ___ for your absence yesterday.｜请解释你昨天缺席的原因。",
+  'accurate':"We need ___ data before any decision.｜做决定前我们需要准确的数据。",
+  'accuse':"They were quick to ___ him of lying.｜他们很快就指控他撒谎。",
+  'achieve':"Hard work helps you ___ your dreams.｜努力帮助你实现梦想。",
+  'acquire':"Children learn to ___ language skills quickly.｜儿童很快学会习得语言技能。",
+  'adapt':"You must ___ to the new environment.｜你必须适应新环境。",
+  'adequate':"The food supply was not ___ for everyone.｜食物供应不足以分给所有人。",
+  'adjust':"It took time to ___ to the night shift.｜花了一段时间才适应夜班。",
+  'admire':"I ___ her courage in difficult times.｜我钦佩她在困境中的勇气。",
+  'adopt':"They decided to ___ a child from the orphanage.｜他们决定从孤儿院领养一个孩子。",
+  'advance':"Science continues to ___ at a rapid pace.｜科学持续快速发展。",
+  'advantage':"His height gave him an ___ in basketball.｜他的身高在篮球上给了他优势。",
+  'adventure':"The trip turned into an unexpected ___.｜这趟旅行变成了一场意外的冒险。",
+  'advise':"I would ___ you to see a doctor.｜我建议你去看医生。",
+  'advocate':"She is known to ___ equal rights for all.｜她以提倡人人平等而闻名。",
+  'affect':"The weather can ___ your mood.｜天气会影响你的心情。",
+  'afford':"We cannot ___ a new car this year.｜我们今年买不起新车。",
+  'afraid':"She was ___ of speaking in public.｜她害怕在公开场合讲话。",
+  'afterward':"We ate and ___ went for a walk.｜我们吃了饭，之后去散步。",
+  'aggressive':"His ___ marketing strategy boosted sales.｜他激进的营销策略提振了销量。",
+  'alarm':"The fire ___ woke everyone up.｜火警警报惊醒了所有人。",
+  'album':"She released a new music ___.｜她发行了一张新音乐专辑。",
+  'alcohol':"He stopped drinking ___ for health reasons.｜他出于健康原因不再饮酒。",
+  'alert':"Stay ___ when crossing the street.｜过马路时保持警觉。",
+  'alien':"The movie is about an ___ visiting Earth.｜这部电影讲一个外星人造访地球。",
+  'alike':"The twins look very much ___.｜这对双胞胎长得很像。",
+  'alive':"The fish was still ___ when we released it.｜我们放生时那条鱼还活着。",
+  'alliance':"The two countries formed a military ___.｜两国结成了军事同盟。",
+  'allow':"The rules do not ___ pets in this building.｜这栋楼的规定不允许养宠物。",
+  'alone':"She wanted to be ___ for a while.｜她想独自待一会儿。",
+  'alter':"We had to ___ our plan at the last minute.｜我们不得不在最后一刻改变计划。",
+  'amaze':"Her talent never fails to ___ me.｜她的才华总是让我惊叹。",
+  'ambiguous':"His answer was deliberately ___.｜他的回答是故意含糊其辞的。",
+  'ambition':"Her ___ is to become a scientist.｜她的抱负是成为一名科学家。",
+  'ambitious':"He is ___ and works very hard.｜他很有抱负，工作非常努力。",
+  'amount':"A small ___ of money can make a difference.｜一小笔钱也能起作用。",
+  'analyse':"Scientists try to ___ the samples carefully.｜科学家试图仔细分析样本。",
+  'ancestor':"My ___ came from a small village.｜我的祖先来自一个小村庄。",
+  'ancient':"They studied ___ Greek philosophy.｜他们研究古希腊哲学。",
+  'angel':"She is like a(n) ___ to the sick children.｜对这些病童来说她像个天使。",
+  'anger':"His rude words stirred her ___.｜他粗鲁的话激起了她的愤怒。",
+  'angle':"Try looking at the problem from a different ___.｜试着从另一个角度看这个问题。",
+  'angry':"He was ___ at being kept waiting.｜他因久等而生气。",
+  'animal':"The zoo keeps a rare ___ from the rainforest.｜动物园饲养一只来自雨林的珍稀动物。",
+  'announce':"They are ready to ___ the winner at the ceremony.｜他们准备在典礼上宣布获胜者。",
+  'annoy':"The noise from next door began to ___ him.｜隔壁的噪音开始让他恼火。",
+  'annual':"The company holds an ___ meeting in spring.｜公司每年春天举行年度会议。",
+  'another':"Have ___ cup of tea if you like.｜喜欢的话再来一杯茶。",
+  'anxious':"She felt ___ about the exam results.｜她对考试成绩感到焦虑。",
+  'apart':"The two houses stand far ___.｜两座房子相隔很远。",
+  'apologise':"I must ___ for my late reply.｜我必须为迟复道歉。",
+  'apparent':"It was ___ that he was lying.｜显然他在撒谎。",
+  'appeal':"The charity's work continues to ___ to many donors.｜该慈善机构的工作持续吸引许多捐助者。",
+  'appear':"A stranger seemed to ___ at the door.｜一个陌生人似乎出现在门口。",
+  'appearance':"Don't judge by ___.｜不要以貌取人。",
+  'applause':"The speech was met with warm ___.｜演讲赢得了热烈的掌声。",
+  'apply':"You should ___ for the job online.｜你应该在线申请这份工作。",
+  'appoint':"They plan to ___ a new manager next week.｜他们计划下周任命一位新经理。",
+  'appreciate':"I really ___ your help with the project.｜我真的很感激你在这个项目上的帮助。",
+  'approach':"Winter is ___ and the days grow cold.｜冬天临近，天气转冷。",
+  'appropriate':"Wear ___ clothes to the interview.｜穿得体的衣服去面试。",
+  'approval':"The plan needs the boss's ___.｜这个计划需要老板的批准。",
+  'approve':"The committee is expected to ___ the plan.｜委员会预计会批准该计划。",
+  'approximate':"The ___ cost is five thousand yuan.｜大致费用是五千元。",
+  'argue':"They like to ___ over small things.｜他们喜欢为小事争论。",
+  'argument':"His ___ was based on solid evidence.｜他的论点基于确凿证据。",
+  'arise':"New problems may ___ at any time.｜新问题可能随时出现。",
+  'army':"He joined the ___ after graduation.｜他毕业后参军。",
+  'around':"There were about fifty people ___.｜周围大约有五十人。",
+  'arrange':"We hope to ___ a meeting for tomorrow.｜我们希望安排明天开会。",
+  'arrest':"The police came to ___ the suspect.｜警察来逮捕嫌疑人。",
+  'arrive':"The train will ___ at noon.｜火车将在中午到达。",
+  'art':"She studied ___ and design at college.｜她在大学学艺术与设计。",
+  'article':"I read an interesting ___ in the paper.｜我在报上读了一篇有趣的文章。",
+  'artificial':"The lake is ___, not natural.｜这个湖是人造的，不是天然的。",
+  'artist':"The ___ painted a mural on the wall.｜那位艺术家在墙上画了幅壁画。",
+  'aspect':"We should consider every ___ of the plan.｜我们应考虑到计划的每个方面。",
+  'assess':"Teachers ___ students' progress regularly.｜老师定期评估学生的进步。",
+  'assign':"The teacher is going to ___ us a long essay.｜老师准备给我们布置一篇长论文。",
+  'assist':"Two nurses came to ___ the surgeon.｜两名护士前来协助外科医生。",
+  'assume':"Don't ___ he is guilty before the trial.｜审判前不要假定他有罪。",
+  'astonish':"The news is certain to ___ everyone present.｜这消息必定让在场所有人震惊。",
+  'athlete':"The young ___ broke the national record.｜那位年轻运动员打破了全国纪录。",
+  'atmosphere':"The ___ in the room was tense.｜房间里的气氛很紧张。",
+  'attach':"Please ___ the file to your email.｜请把文件附在邮件里。",
+  'attack':"The dog suddenly began to ___ the stranger.｜狗突然开始袭击陌生人。",
+  'attempt':"She made an ___ to climb the mountain.｜她尝试攀登那座山。",
+  'attend':"He failed to ___ the meeting.｜他没能参加会议。",
+  'attention':"Pay ___ to the road signs.｜注意路标。",
+  'attitude':"Her positive ___ helped the team.｜她积极的态度帮了团队。",
+  'attract':"Bright colors tend to ___ children's eyes.｜鲜艳的色彩往往吸引孩子的目光。",
+  'audience':"The ___ applauded after the performance.｜演出后观众鼓掌。",
+  'author':"The ___ of the book is a historian.｜这本书的作者是一位历史学家。",
+  'authority':"The court has the ___ to make decisions.｜法庭有权做出裁决。",
+  'automatic':"The door opens in an ___ way.｜门是自动打开的。",
+  'autumn':"The leaves turn yellow in ___.｜树叶在秋天变黄。",
+  'average':"The ___ temperature this month is 20℃.｜本月平均气温 20℃。",
+  'avoid':"To ___ mistakes, check your work.｜为避免错误，检查你的作业。",
+  'awake':"The noise kept me ___ all night.｜噪音让我整夜清醒。",
+  'award':"She received an ___ for her research.｜她因研究获得了一项奖项。",
+  'aware':"Are you ___ of the risks involved?｜你意识到其中的风险了吗？"
+};
+function clozeReal(w){ return SENT[w[0].toLowerCase()] || null; }
+function cloze(w){ return clozeReal(w); }
+function norm(s){ return (s||'').trim().toLowerCase().replace(/[.;,!?]+$/,'') ; }
+
+const root=document.getElementById('root');
+const SRC=[['all','全部'],['high','高频'],['mid','中频'],['low','低频'],['wrong','错词本'],['custom','导入']];
+const GOOD_FB=['✔ 答对！','✔ 一次过。','✔ 记住了。','✔ 沈确轻轻「嗯」了一声。'];
+const BAD_FB=['✘ 答错了。','✘ 没对。','✘ 沈确用笔点了点正确释义。','✘ 他摇了摇头，又念了一遍。'];
+const BAD_SPELL_FB=['沈确在旁边补了遍释义。','他把那个词圈了两遍。','他没笑你，只推了张纸条过来。','「再记一记。」他说。'];
+// 夜读/错题本：把裸抽词包装成沈确的对话
+const SHEN_REVIEW=['「这道题我总记混，你考我。」他把卡片推过来。','「这个我昨晚梦到过，今早一醒还是想不起——你来。」','「你帮我看一眼这个，我脑子现在转不动。」','「这个上次你也卡过吧？再确认一次。」','「我记得老记反，你念准了我就放心。」'];
+const SHEN_NEW=['「这个词我没背熟，你先考我，我再还你。」','「新的一摞，咱俩谁先会谁教谁。」','「这个看着眼生，你试着念一下？」','「你英语比我细，这个帮我过一遍。」','「今晚新词不多，但都挺绕，咱慢慢来。」'];
+function pickR(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function pickFB(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+document.addEventListener('click', function(e){ if(e.target.closest('.choice,.card,.btn-primary,.btn-ghost,.topbar button,.mode button,.speak,.linkbtn')) sfxClick(); });
+let curView='menu', gSrc='all';
+function setSrc(s){ gSrc=s; if(curView==='story') renderStoryStart(); else if(curView==='daily') renderDaily(); else if(curView==='task') renderChapterTask(); else if(curView==='import') renderImport(); else renderMenu(); }
+function srcBar(){ return `<div class="mode">`+SRC.map(s=>`<button class="${gSrc===s[0]?'on':''}" onclick="setSrc('${s[0]}')">${s[1]}</button>`).join('')+`</div>`; }
+function srcName(){ return (SRC.find(x=>x[0]===gSrc)||['','全部'])[1]; }
+
+/* ============ 打字机逐字显示（叙事 .txt.tw） ============ */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function typeWrite(){
+  try{
+    const els=document.querySelectorAll('.txt.tw:not(.tw-done)');
+    const reduce = (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    els.forEach(function(el){
+      const full = el.getAttribute('data-tw') || el.textContent;
+      el.setAttribute('data-tw', full);
+      if(reduce || !('requestAnimationFrame' in window)){ el.textContent=full; el.classList.add('tw-done'); return; }
+      el.innerHTML=''; let i=0;
+      const speed = full.length>140 ? 6 : 16;
+      (function step(){
+        if(i<=full.length){
+          el.innerHTML = '<span class="tw-t">'+esc(full.slice(0,i))+'</span>'+(i<full.length?'<span class="tw-c">▍</span>':'');
+          i++; setTimeout(step, speed);
+        } else { el.textContent=full; el.classList.add('tw-done'); }
+      })();
+    });
+  }catch(e){}
+}
+
+/* ============ 封面 / 开场 ============ */
+function renderCover(){
+  curView='cover';
+  const s=stat(); const p=loadP();
+  const has = s.total>0;
+  root.innerHTML=`
+   <div class="cover">
+     <div class="kicker">原创校园考研同人</div>
+     <h1>窗边的长桌</h1>
+     <div class="ruleline"></div>
+     <div class="tagline">把 5488 个考研词，背进同一张图书馆长桌的故事里。<br>你答得准，故事就偏向 HE；答岔了，就偏 BE。</div>
+     <div class="heroline"><span>沈确 · 二战 · 嘴硬 · 夜班</span><span>你 · 家里第一个考研 · 也嘴硬</span></div>
+     <div class="cta">
+       <button class="btn-primary" onclick="renderMenu()">${has?'继续游戏':'开始游戏'} →</button>
+       <button class="btn-ghost" onclick="renderAbout()">先看怎么玩</button>
+       <button class="btn-ghost" onclick="renderChars()">认识他们俩</button>
+     </div>
+     <div class="progressline">已掌握 ${s.mastered} 词 ｜ 羁绊碎片 ${p.frag||0} ｜ ${has?'进度已保存':'第一次来，故事等你开始'}</div>
+     <div class="coverfoot"><button class="linkbtn" onclick="renderSettings()">⚙ 设置</button></div>
+   </div>`;
+}
+
+/* ============ 玩法说明 ============ */
+function renderAbout(){
+  curView='about';
+  root.innerHTML=`<div class="topbar"><button onclick="renderCover()">封面</button><button onclick="renderMenu()">首页</button><button class="on">玩法</button></div>
+   <div class="scene about">
+     <div class="who">【怎么玩 · 三分钟看懂】</div>
+     <h2>1 · 这是啥</h2>
+     <p>一个原创校园考研同人小游戏。<b>所有背词都发生在剧情里</b>——没有脱离故事的纯刷题。游戏里有 <b>一条主线 + 三条番外</b>，外加两个复习入口；无论在哪条线背的词，都写进<b>同一本账</b>（进度全局共享）。</p>
+     <h2>2 · 剧情地图（别晕）</h2>
+     <p>剧情是<b>平行演的</b>：每条线各自算天平、独立结局，一条线的走向<b>不影响</b>另一条。它们更像同一世界里发生的几段插曲。各线一览：</p>
+     <ul>
+       <li><span class="q">▶ 主线 · 三章</span>：你和沈确，从倒计时长桌到春天拟录取。答对偏 HE、答错偏 BE。</li>
+       <li><span class="q">🌊 风波（周屿）</span>：男2周屿是你老家一起长大的发小，喜欢你、想拉你回老家。⏱ 主线第三章·拟录取之后。</li>
+       <li><span class="q">🌸 误会（林晚）</span>：女2林晚明晃晃喜欢沈确，总在你俩之间点起误会。⏱ 主线第一章·长桌期间。</li>
+       <li><span class="q">🔥 合流</span>：周屿和林晚同框，同一周两头将你一军，你得周旋。⏱ 主线第三章·拟录取之后。</li>
+       <li><span class="q">🌙 陪他夜读</span>：每日复习主力，按遗忘曲线推「快忘的词」，慢慢啃完 5488 全库。</li>
+       <li><span class="q">📕 他的错题本</span>：只考你答错过、还没掌握稳的词，针对性补测。</li>
+     </ul>
+     <p>建议顺序：<b>主线 → 风波/误会 → 合流</b>（合流是同框，先认识两人更好懂）。任何单词关都能点 <b>← 返回首页</b> 回首页，不丢进度。</p>
+     <h2>3 · 命运天平</h2>
+     <p>每个选项、每道单词关，都在后台悄悄加减<b>羁绊 / 误会</b>。你<b>看不到阈值</b>，凭直觉选就好。单词答对→偏 HE，答错→偏 BE。最后走向 HAPPY END 还是 BAD END，由你的选择决定。</p>
+     <h2>4 · 四种题型</h2>
+    <ul>
+      <li><span class="q">选择题</span>：选出正确中文释义。题目顶部可点 🔊 听发音。</li>
+      <li><span class="q">拼写题</span>：看音标与释义，拼出英文。想不起怎么读时点 🔊 点读。</li>
+      <li><span class="q">听音选义</span>：点🔊听发音，选释义（用浏览器语音合成）。</li>
+      <li><span class="q">例句填空</span>：在真实英文例句里填词，也可点 🔊 听单词原声（仅对收录例句的词出现）。</li>
+    </ul>
+     <h2>5 · 间隔复习（别背完就忘）</h2>
+     <p>每答对一次，下次复习间隔变长；答错则重置。系统按<b>遗忘曲线</b>优先把「快忘的词」推给你复习，而不是一股脑全塞新词。</p>
+     <h2>6 · 主题词包（给剧情「配戏」的分类）</h2>
+     <p>游戏会把词按意思分成 9 类：<b>情绪·心</b>（爱、恋、悲、喜…）/ <b>坚持·韧</b>（忍、奋斗、克服…）/ <b>离别·远</b>（离、别、散、孤…）/ <b>求学·知</b>（学、读、考、思…）/ <b>言说·达</b>（说、谈、表达…）/ <b>困顿·阻</b>（难、挫、险、压…）/ <b>自然·景</b>（山、水、风、月、春秋…）/ <b>时间·逝</b>（时、岁、久、瞬、永…）/ <b>事业·成</b>（职、升、成、功、业…）。</p>
+     <p>这不是给你背的分类表，而是<b>剧情单词关的「选词逻辑」</b>——比如考后那关专挑「情绪·心」类的词，离别的章节专挑「离别·远」类的词，拟录取之后那关会带上「事业·成」「时间·逝」这种面向未来的词，背起来更有画面、和故事氛围对得上。分不进这 9 类的词都归进「通用」大池子，靠夜读和错题本慢慢啃完。进度页的「词库主题分布」能看到这 9 类的名字。</p>
+     <h2>7 · 羁绊碎片 & 成就</h2>
+     <p>「陪他夜读」不限次数，每完成一组攒 1 枚碎片，攒够 5 枚解锁隐藏结局；掌握 50 / 100 / 300 词等里程碑会在「成就」里亮起。</p>
+     <h2>8 · 进度存哪</h2>
+     <p>全部存在浏览器本地（localStorage），关掉再来还在。可在「设置」里<b>导出/导入存档</b>备份进度，或「我的进度」里清空重来。答题时随时可点<b>← 返回首页</b>回到首页。</p>
+     <div class="choices" style="margin-top:14px"><button class="choice" onclick="renderMenu()">明白了，去首页 →</button></div>
+   </div>`;
+}
+
+/* ============ 角色人设卡 ============ */
+function charSVG(c){
+  const ex=c.expr||'normal';
+  const s=c;
+  // face shape with chin
+  const face = `<path d="M30 42 Q30 28 50 28 Q70 28 70 42 L70 54 Q70 73 50 80 Q30 73 30 54 Z" fill="${s.skin}"/>
+    <path d="M30 42 Q30 28 50 28 Q70 28 70 42 L70 54 Q70 73 50 80 Q30 73 30 54 Z" fill="url(#sh${s.id})" opacity=".15"/>`;
+  // hair base
+  const hairBase = `<path d="M26 46 Q24 28 38 20 Q50 12 62 20 Q76 28 74 46 Q75 38 70 32 Q60 24 50 24 Q40 24 30 32 Q25 38 26 46 Z" fill="${s.hair}"/>
+    <path d="M26 46 Q26 36 34 36 L40 36 Q38 44 34 50 Q30 54 26 46 Z" fill="${s.shadow || s.hair}" opacity=".6"/>`;
+  // eyes
+  const eyeL = `<g transform="translate(40,50)"><ellipse cx="0" cy="0" rx="3.8" ry="2.8" fill="#fff"/>
+    <circle cx="0" cy="0" r="2.3" fill="${s.iris}"/>
+    <circle cx=".7" cy="-.7" r=".9" fill="#fff" opacity=".9"/>
+    <path d="M-4 -3 Q0 -5 4 -3" stroke="${s.line}" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>`;
+  const eyeR = `<g transform="translate(60,50)"><ellipse cx="0" cy="0" rx="3.8" ry="2.8" fill="#fff"/>
+    <circle cx="0" cy="0" r="2.3" fill="${s.iris}"/>
+    <circle cx=".7" cy="-.7" r=".9" fill="#fff" opacity=".9"/>
+    <path d="M-4 -3 Q0 -5 4 -3" stroke="${s.line}" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>`;
+  // mouth
+  const mouth = ex==='smile'
+    ? `<path d="M45 67 Q50 72 55 67" stroke="${s.lip || s.line}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+    : `<path d="M46 68 Q50 70 54 68" stroke="${s.lip || s.line}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  // blush
+  const blush = ex==='shy' || ex==='warm'
+    ? `<ellipse cx="37" cy="60" rx="4.5" ry="2.6" fill="#e5988e" opacity=".55"/><ellipse cx="63" cy="60" rx="4.5" ry="2.6" fill="#e5988e" opacity=".55"/>`
+    : '';
+  // nose
+  const nose = `<path d="M50 54 L49 61" stroke="${s.line}" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".55"/>`;
+  // clothes
+  const collar = s.collar || `<path d="M35 79 L42 85 L58 85 L65 79 Q50 83 35 79 Z" fill="${s.clothes}"/>`;
+  const neck = `<path d="M42 78 L42 86 L58 86 L58 78 Z" fill="${s.skin}"/>`;
+  const shirt = `<path d="M18 92 Q18 80 36 82 L50 88 L64 82 Q82 80 82 92 L82 100 L18 100 Z" fill="${s.clothes}"/>`;
+
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g${s.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.bg[0]}"/><stop offset="1" stop-color="${s.bg[1]}"/></linearGradient>
+      <linearGradient id="sh${s.id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+    </defs>
+    <rect x="0" y="0" width="100" height="100" rx="22" fill="url(#g${s.id})"/>
+    ${shirt}${neck}${collar}${face}${hairBase}${blush}${eyeL}${eyeR}${nose}${mouth}${s.item||''}
+  </svg>`;
+}
+const ZHOU={ id:'z', bg:['#caa15e','#9c7330'], skin:'#f7e6d2', hair:'#3a2c1e', line:'#3a2c1e', iris:'#7a5a22', lip:'#c07a64', clothes:'#ece3cf', shadow:'#2a1f14',
+    collar:'<path d="M35 79 L44 87 L56 87 L65 79 L50 92 Z" fill="#fff" opacity=".92"/><path d="M44 87 L50 96 L56 87 Z" fill="#e7dcc8"/>', expr:'smile' };
+const LIN={ id:'l', bg:['#e3b7c9','#c792b0'], skin:'#f8e6d8', hair:'#3a2a20', line:'#3a2a20', iris:'#7a4a6a', lip:'#c86a86', clothes:'#f3e2ea', shadow:'#2e2018',
+    collar:'<path d="M35 79 L44 87 L56 87 L65 79 L50 92 Z" fill="#fff" opacity=".95"/>',
+    item:'<path d="M26 50 Q21 67 26 82 Q30 88 34 81 Q31 66 33 52 Z" fill="#3a2a20"/><path d="M74 50 Q79 67 74 82 Q70 88 66 81 Q69 66 67 52 Z" fill="#3a2a20"/><circle cx="64" cy="40" r="2.6" fill="#f4d35e" opacity=".9"/>',
+    expr:'smile' };
+function faceSVG(f){ if(f==='zhou') return charSVG(ZHOU); if(f==='lin') return charSVG(LIN); return ''; }
+function renderChars(){
+  curView='chars';
+  const shen={ id:'s', bg:['#7a9da8','#4e6f7a'], skin:'#f6e3d3', hair:'#2f3942', line:'#2f3942', iris:'#3d5560', lip:'#b87b7b', clothes:'#dce4e7', shadow:'#202830',
+    collar:'<path d="M35 79 L44 87 L56 87 L65 79 Q50 84 35 79 Z" fill="#c9d4d8"/><path d="M44 87 L50 96 L56 87 Z" fill="#bfcbd0"/>', expr:'normal' };
+  const you ={ id:'y', bg:['#d69a5c','#b16d36'], skin:'#fae8d6', hair:'#4a3020', line:'#4a3020', iris:'#6b4a32', lip:'#c77a6d', clothes:'#f4ede3', shadow:'#342218',
+    collar:'<path d="M36 79 L43 86 L57 86 L64 79 L50 92 Z" fill="#fff" opacity=".95"/>', expr:'smile' };
+  root.innerHTML=`<div class="topbar"><button onclick="renderCover()">封面</button><button onclick="renderMenu()">首页</button><button class="on">人设</button></div>
+   <div class="scene">
+     <div class="who">【主角们 · 都不会好好说话】</div>
+     <div class="chars">
+       <div class="char">${charSVG(shen)}<h3>沈确</h3><div class="role">同桌 · 二战 · 嘴硬</div>
+         <p>图书馆总来得比你早，给你留靠窗不漏风的位子。二战、便利店夜班贴补生活费、瞒着妈妈。口语一开口就结巴，越在意越冷着不说话。</p>
+         <div class="traits"><span>嘴硬</span><span>细腻</span><span>夜班</span><span>结巴</span></div></div>
+       <div class="char">${charSVG(you)}<h3>你</h3><div class="role">主角 · 家里第一个考研</div>
+         <p>嘴硬，其实比谁都怕这根弦断。家里第一个考研，回去没法交代。阅读还行一提笔写就空。随口说「去别的城市」是拿话刺他，不是真想走。</p>
+         <div class="traits"><span>嘴硬</span><span>焦虑</span><span>外冷</span><span>心软</span></div></div>
+       <div class="char">${charSVG(ZHOU)}<h3>周屿</h3><div class="role">番外 · 男2 · 老乡发小</div>
+         <p>你老家一起长大的发小，比你早几年出去工作，体面、会说话、家里有关系能安排工作。考研最后那段他突然出现在你学校，想把你拉回老家的「安稳」里去——成了你和沈确之间那场风波的由头（见番外·风波）。</p>
+         <div class="traits"><span>周全</span><span>体面</span><span>老乡</span><span>执着</span></div></div>
+       <div class="char">${charSVG(LIN)}<h3>林晚</h3><div class="role">番外 · 女2 · 喜欢沈确</div>
+         <p>同系同级，笑起来很甜、主动，打一开始就明晃晃喜欢沈确——总找他问问题、约他小组讨论。她没有恶意，可她越自然亲近，你越坐不住。你和沈确之间那些误会，多半是她「无意」点起来的（见番外·误会）。</p>
+         <div class="traits"><span>甜</span><span>主动</span><span>直球</span><span>无心机</span></div></div>
+     </div>
+     <div class="txt" style="font-size:12.5px;color:var(--ink2);margin-top:12px;line-height:1.8">两个嘴硬的人，把没说出口的话，都藏进了互相考的词里；番外里，有想把你拉走的周屿，也有喜欢沈确、总在你俩之间点起误会的林晚。</div>
+     <div class="choices" style="margin-top:14px"><button class="choice" onclick="renderMenu()">返回首页</button></div>
+   </div>`;
+}
+
+/* ============ 成就里程碑 ============ */
+const MILE={
+  words:[ {n:10,name:'初识',ic:'🌱'},{n:50,name:'渐熟',ic:'🌿'},{n:100,name:'默契',ic:'🍀'},{n:300,name:'暗号',ic:'✨'},{n:1000,name:'满库',ic:'🏛'} ],
+  frag:[ {n:1,name:'初遇',ic:'🌙'},{n:5,name:'有窗的房',ic:'🪟'},{n:15,name:'长情',ic:'💛'} ],
+  story:[ {n:1,name:'通关一次',ic:'📖'} ]
+};
+function renderAch(){
+  curView='ach';
+  const s=stat(); const p=loadP();
+  const mk=(list,val,fmt)=>list.map(m=>{ const got = val>=m.n; return `<div class="badge ${got?'':'locked'}"><div class="ic">${m.ic}</div><div class="nm">${m.name}</div><div class="ds">${fmt(m.n)}</div>${got?'':'<div class="lock">未解锁</div>'}</div>`; }).join('');
+  root.innerHTML=`<div class="topbar"><button onclick="renderCover()">封面</button><button onclick="renderMenu()">首页</button><button class="on">成就</button></div>
+   <div class="scene">
+     <div class="who">【成就 · 里程碑】</div>
+     <h2 style="font-size:14px;color:var(--orange-d);margin:6px 0 2px">已掌握词数</h2>
+     <div class="ach">${mk(MILE.words, s.mastered, n=>'掌握 '+n+' 词')}</div>
+     <h2 style="font-size:14px;color:var(--orange-d);margin:14px 0 2px">羁绊碎片</h2>
+     <div class="ach">${mk(MILE.frag, p.frag||0, n=> n+' 枚碎片')}</div>
+     <h2 style="font-size:14px;color:var(--orange-d);margin:14px 0 2px">主线</h2>
+     <div class="ach">${mk(MILE.story, (p.cleared?1:0), ()=>'走完一次结局')}</div>
+     <div class="choices" style="margin-top:14px"><button class="choice" onclick="renderMenu()">返回首页</button></div>
+   </div>`;
+}
+
+/* ============ 设置 ============ */
+function renderSettings(){
+  curView='settings';
+  const sfx=getSfx(); const ck=loadCloud(); const showCloud=/[?&]cloud=1\b/.test(location.search||'');
+  root.innerHTML=`<div class="topbar"><button onclick="renderCover()">封面</button><button onclick="renderMenu()">首页</button><button class="on">设置</button></div>
+   <div class="scene">
+     <div class="who">【设置】</div>
+     <div class="txt" style="font-size:13px;color:var(--ink2);margin-bottom:6px">音效与进度都只存在本机，关掉再来还在。</div>
+     <button class="card" onclick="toggleSfx()"><h3>🔊 音效 ${sfx?'：开':'：关'}</h3><p>${sfx?'点按 / 答对 / 答错都有轻音效。点此关闭。':'开启后有轻音效反馈（翻页、答对、答错）。点此体验。'}</p></button>
+     ${showCloud ? `
+      <div class="card">
+       <div class="sec-title" style="margin-top:0">☁ 云存档（自建服务）</div>
+       <div class="txt" style="font-size:12.5px;color:var(--dim);margin:2px 0 10px">把进度存到你自己的私有存档服务，换设备 / 清缓存也能拉回。三项都只存本机浏览器，不会进存档文件。<b>首次保存会自动生成「存档ID」，请务必记下来</b>（换设备要用）。</div>
+       <div class="field"><label>服务地址</label><input id="apiBase" class="qinput" placeholder="https://你的域名.com" value="${ck.apiBase}"></div>
+       <div class="field"><label>存档 ID</label><input id="saveId" class="qinput" placeholder="留空 = 首次自动生成" value="${ck.saveId}"></div>
+       <div class="field"><label>口令</label><input id="cloudPass" type="password" class="qinput" placeholder="保护你存档的私人口令" value="${ck.pass}"></div>
+       <div class="cloud-row">
+         <button class="choice" onclick="cloudSave()">☁ 保存到云端</button>
+         <button class="choice" onclick="cloudLoad()">☁ 从云端拉取</button>
+       </div>
+       <div id="cloudMsg" class="cloud-msg"></div>
+      </div>` : ''}
+     <button class="card" onclick="exportSave()"><h3>⬇ 导出存档</h3><p>把进度备份成一个 JSON 文件，可带走、可换设备恢复。</p></button>
+     <button class="card" onclick="document.getElementById('impFile').click()"><h3>⬆ 导入存档</h3><p>从备份文件恢复进度（会覆盖当前存档）。</p></button>
+     <input id="impFile" type="file" accept="application/json,.json" style="display:none" onchange="importSave(event)">
+     <button class="card" onclick="if(confirm('确定清空所有进度？')){localStorage.removeItem(PK);renderSettings();}"><h3>🗑 清空进度</h3><p>删除所有已背词、碎片与错词本，回到初始。</p></button>
+     <button class="card" onclick="renderMenu()"><h3>返回</h3><p>回到首页。</p></button>
+   </div>`;
+}
+function exportSave(){
+  try{
+    const data = localStorage.getItem(PK) || '{}';
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    const pad = n=>(''+n).padStart(2,'0');
+    a.href = url; a.download = '长桌存档_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){ alert('导出失败：'+e.message); }
+}
+function importSave(ev){
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = function(){
+    try{
+      const obj = JSON.parse(r.result);
+      if(typeof obj!=='object' || obj===null || !('words' in obj)){ alert('这不是有效的存档文件'); return; }
+      if(!confirm('导入会覆盖当前进度，确定继续？')) return;
+      localStorage.setItem(PK, JSON.stringify(obj));
+      renderSettings();
+    }catch(e){ alert('解析失败：'+e.message); }
+  };
+  r.readAsText(f);
+  ev.target.value='';
+}
+/* ============ 云存档（自建服务） ============ */
+const CK='kaoyan_cloud_v1';
+function loadCloud(){ try{ return Object.assign({apiBase:'',saveId:'',pass:''}, JSON.parse(localStorage.getItem(CK)||'{}')); }catch(e){ return {apiBase:'',saveId:'',pass:''}; } }
+function saveCloud(c){ try{ localStorage.setItem(CK, JSON.stringify(c)); }catch(e){} }
+function cloudMsg(t,ok){ const el=document.getElementById('cloudMsg'); if(el){ el.textContent=t; el.style.color = ok===false?'#c87a83':(ok===true?'#5f8466':'var(--ink2)'); } }
+async function cloudSave(){
+  const apiBase=(document.getElementById('apiBase').value||'').trim().replace(/\/+$/,'');
+  const pass=(document.getElementById('cloudPass').value||'').trim();
+  let id=(document.getElementById('saveId').value||'').trim();
+  if(!apiBase){ cloudMsg('请先填写服务地址', false); return; }
+  if(!pass){ cloudMsg('请设置口令（保护你的存档）', false); return; }
+  if(!id){ // 首次：自动生成存档ID（去掉易混字符 0/O/1/l/I）
+    const cs='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let s=''; for(let i=0;i<12;i++) s+=cs[Math.floor(Math.random()*cs.length)];
+    id=s;
+  }
+  const c=loadCloud(); c.apiBase=apiBase; c.saveId=id; c.pass=pass; saveCloud(c);
+  const data=localStorage.getItem(PK)||'{}';
+  cloudMsg('正在同步到云端…');
+  try{
+    const r=await fetch(apiBase+'/api/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,pass,data})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok){ cloudMsg('同步失败：'+(j.error||('HTTP '+r.status)), false); return; }
+    const si=document.getElementById('saveId'); if(si) si.value=id;
+    cloudMsg('✅ 已同步。记下你的存档ID：'+id+'（换设备要用）', true);
+  }catch(e){ cloudMsg('网络错误：'+e.message, false); }
+}
+async function cloudLoad(){
+  const apiBase=(document.getElementById('apiBase').value||'').trim().replace(/\/+$/,'');
+  const pass=(document.getElementById('cloudPass').value||'').trim();
+  const id=(document.getElementById('saveId').value||'').trim();
+  if(!apiBase||!id||!pass){ cloudMsg('请填写服务地址、存档ID 和口令', false); return; }
+  const c=loadCloud(); c.apiBase=apiBase; c.saveId=id; c.pass=pass; saveCloud(c);
+  cloudMsg('正在从云端拉取…');
+  try{
+    const u=apiBase+'/api/load?id='+encodeURIComponent(id)+'&pass='+encodeURIComponent(pass);
+    const r=await fetch(u);
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok){ cloudMsg('拉取失败：'+(j.error||('HTTP '+r.status)), false); return; }
+    if(!confirm('将从云端覆盖本地进度，确定继续？')){ cloudMsg('已取消'); return; }
+    localStorage.setItem(PK, j.data);
+    cloudMsg('✅ 已从云端拉取，正在刷新…', true);
+    renderMenu();
+  }catch(e){ cloudMsg('网络错误：'+e.message, false); }
+}
+function toggleSfx(){ setSfx(!getSfx()); if(getSfx()) sfxClick(); renderSettings(); }
+
+/* ============ 菜单 ============ */
+function renderMenu(){
+  curView='menu';
+  const s=stat(); const p=loadP();
+  const due=dueCount(); const um=unmastered().length;
+  const tip = '建议：先复习快忘的词，再推进没背过的新词。夜读不限次数，想陪他背几组都行，每完成一组都攒碎片 🌙';
+  const todayHTML=`<div class="today">
+     <div class="tl">今日 · 长桌</div>
+     <div class="tstats"><span>待复习 ${due}</span><span>未掌握 ${um}</span><span>碎片 ${p.frag||0}</span><span>${p.shenSpoken?('已陪 '+p.shenSpoken+' 次'):'还没陪他背过'}</span></div>
+     <div class="tip">${tip}</div>
+     <div class="choices" style="margin-top:6px">
+       <button class="choice" onclick="dailyRun()">🌙 陪他夜读（不限次数）</button>
+       <button class="choice" onclick="renderStoryStart()">▶ 推进主线剧情</button>
+     </div>
+   </div>`;
+  root.innerHTML=`
+    <div class="topbar"><button class="on">首页</button><button onclick="renderDaily()">夜读</button><button onclick="renderStats()">进度</button><button onclick="renderSettings()">设置</button></div>
+    ${todayHTML}
+    <div class="grp">📖 剧情线</div>
+    <button class="card" onclick="renderStoryStart()"><span class="badge">主线 · HE/BE</span><h3>同人剧情（三章）</h3><p>原创校园考研 AU：你和同桌沈确，两个都不会好好说话的普通考研人。从倒计时长桌到春天拟录取。剧情卡在考研词上，答对→偏 HE，答错→偏 BE。每个单词关绑定一个主题词包。</p></button>
+    <button class="card" onclick="startStory('storm')"><span class="badge">番外 · HE/BE</span><h3>风波 · 男2周屿（支线）</h3><p>⏱ 发生在主线 第三章·拟录取 之后。老家一起长大的发小周屿突然出现，想把你从沈确身边拉回老家。误会、吃醋、一句「别跟他走」——这场风波里卡住的词，由你选怎么填。</p></button>
+    <button class="card" onclick="startStory('girl')"><span class="badge">番外 · HE/BE</span><h3>误会 · 女2林晚（支线）</h3><p>⏱ 发生在主线 第一章·长桌 期间。同系甜妹林晚明晃晃喜欢沈确，总凑过去问问题、约小组，你越看越酸。一场由你亲手点起来的火——误会、吃醋、借词说开。</p></button>
+    <button class="card" onclick="startStory('both')"><span class="badge">番外 · HE/BE</span><h3>合流 · 周屿&林晚同框（支线）</h3><p>⏱ 发生在主线 第三章·拟录取 之后。同一周，周屿来学校、林晚照常黏沈确，你被两头将了一军——一边想把你拉回老家，一边把沈确黏得紧。周旋、吃醋、借词说开。</p></button>
+    <button class="card" onclick="startStory('grad')"><span class="badge">番外 · HE/BE</span><h3>读研后 · 有窗的房（支线）</h3><p>⏱ 发生在主线 第三章·拟录取 之后。你们搬进一间朝南有窗的房，读研的日子还在天天卡词。耳机、夜读、家里的电话——把这一年没说够的「留下」，再考一遍。</p></button>
+    <div class="grp">📚 复习 & 工具</div>
+    <button class="card" onclick="renderDaily()"><span class="badge">可随时 · 间隔复习</span><h3>陪他夜读（不限次数）</h3><p>沈确拉你晚上多留半小时，互相考还没背熟的词。按遗忘曲线优先抽「快忘的词」复习，其余推进新词；每完成一组都攒「羁绊碎片」。随时都能刷，把 5488 词一点点啃完。</p></button>
+    <button class="card" onclick="renderChapterTask()"><span class="badge">可选 · 错词补测</span><h3>他的错题本</h3><p>沈确总记混的词，你帮他测一遍。从你的错词本抽，答完给碎片。当前易错 ${s.wrong} 词。</p></button>
+    <button class="card" onclick="renderFav()"><span class="badge">可选 · 收藏补测</span><h3>我的收藏</h3><p>刷题时点「⭐ 收藏」收进来的词，随时单列反复测，答完给碎片。当前收藏 ${(loadP().fav||[]).length} 词。</p></button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px">
+      <button class="card" style="margin-bottom:0" onclick="renderChars()"><h3>人设卡</h3><p>认识沈确和你。</p></button>
+      <button class="card" style="margin-bottom:0" onclick="renderAch()"><h3>成就</h3><p>里程碑与碎片。</p></button>
+    </div>
+    <button class="card" onclick="renderStats()"><h3>我的进度</h3><p>已掌握 ${s.mastered} ｜ 易错 ${s.wrong} ｜ 累计 ${s.total} ｜ 碎片 ${p.frag||0}。可清空重来。</p></button>
+    <button class="card" onclick="renderImport()"><h3>导入专属词表</h3><p>粘贴你的词表，存进自定义词库。</p></button>
+    <button class="btn-ghost" style="width:100%;margin-top:12px" onclick="renderAbout()">📖 怎么玩 / 使用说明</button>`;
+}
+
+/* ============ 同人剧情 ============ */
+let mode='random', sceneId='start', s={bond:0,doubt:0}, reviewed=0;
+function net(){return s.bond-s.doubt;}
+const story={
+  w1:{type:'word', pack:'study', fixed:'acquaint', next:'s1', who:'【第一章 · 长桌】',
+      text:'考研倒计时两个月。你和一个叫沈确的男生被分到图书馆同一张长桌。他不怎么说话，只是每天来得比你早，给你留着靠窗那个不漏风的位置。\n你嘴硬，其实你是家里第一个考研的——回去没法交代，所以比谁都怕这根弦断，偏又爱装不在乎。\n有天你卡在一个词上，翻来覆去记不住。沈确把笔帽转了一下，把他的单词本推过来——那个词正好被他用荧光笔画了横线。\n「这个，」他没抬头，「你要是能说准意思，我就信你这次真在背。」',
+      right:'你脱口而出，他挑了下眉，把笔记本往你那边又推了半寸：「行，算你这次在背。」——那是你们第一次，在同一个词上对接上。',
+      wrong:'你卡壳了。他没笑你，只把那个词的释义用小字补在旁边：「先记住这个，别的慢慢来。」你有点窘，也有点暖。'},
+  s1:{type:'story', who:'【插曲 · 十一月】',
+      text:'十一月，你模考英语又没过线。那天你趴在桌上不想动，沈确安静地坐了一会儿，忽然把他的耳机分你一只。\n里面在放一盘很老的听力磁带，沙沙的。你戴上，什么也没说。\n后来你随口说：「我可能真的考不上了。」他停了停：「去年我也是这时候垮的。后来不也过来了。」\n——这是你第一次知道，他不是天生淡定，他是二战。',
+      choices:[
+        {t:'「那今年，咱俩一起扛」', fx:{bond:2}, next:'w2'},
+        {t:'「你那时候，怎么过来的」', fx:{bond:1}, next:'w2'},
+        {t:'把耳机推回去：「不用，我自己静会儿」', fx:{doubt:2}, next:'w2'},
+      ]},
+  w2:{type:'word', pack:'general', fixed:'persist', next:'s2', who:'【第一章 · 十二月】',
+      text:'十二月中旬，图书馆开始有人退场。沈确在你常翻的那页夹了张纸条，写着他总记混的几个词，最后一个打了个大问号。\n「帮我看看，」他说，「我老觉得记反了——你英语比我细。」\n你没告诉他，自己阅读还行，一提笔写就空，比记词更怵。你只注意到他用的是那支笔帽快掉的水笔，咖啡杯里照例加了三包糖。',
+      right:'你一眼点出他记反的两个，他「哦」了一声，把纸条翻面重抄了一遍：「还是你细。」',
+      wrong:'你也没把握，含糊带过。他没追问，把那张纸条收进笔袋——后来你才发现，他回去自己查了三遍。'},
+  s2:{type:'story', who:'【插曲 · 考前夜】',
+      text:'考前一晚，你收到他一条消息：「明天考场见。」后面又发来一句，又撤回了。\n你盯着那个撤回的痕迹，想了想，回了一句。',
+      choices:[
+        {t:'回：「加油，明天见」', fx:{bond:2}, next:'w3'},
+        {t:'回：「不管怎样，谢了你这俩月留的座」', fx:{bond:1}, next:'w3'},
+        {t:'什么都没回，把手机扣在桌上睡了', fx:{doubt:2}, next:'w3'},
+      ]},
+  w3:{type:'word', pack:'love', fixed:'confess', next:'a1', who:'【第一章 · 考后】',
+      text:'考完那天下午，你在老位置又看到他。他没走，把笔盖合上，推过来最后一张纸条——上面只有一个词，画了圈。\n「这词，」他说，「你答上来，我就把没发出去那句说了。」',
+      right:'你念出那个词，他耳朵一下红了，把纸条翻过来——背面是他考前夜撤回的那句。',
+      wrong:'你没答上来。他愣了下，把纸条收回去：「……没事，本来也不一定非说。」气氛空了一拍。'},
+  ch1:{type:'chapter', who:'【第一章 · 完】',
+      text:'成绩出来前那阵子，你们照常去图书馆，只是不再互相考词了。\n他依旧留着靠窗的位子。你依旧坐过去。有些话没说，但不慌。\n—— 第一章 完 ——',
+      next:'w4'},
+  w4:{type:'word', pack:'hard', fixed:'endure', next:'s3', who:'【第二章 · 查分】',
+      text:'过完年，出分那天，你们挨在一起查。都擦线，都悬。沈确盯着屏幕沉默了很久，然后说：「得准备复试了。」\n他忽然像要掩饰什么似的，把一道词推给你：「你先考我这个，我脑子现在转不动。」',
+      right:'你说准了。他像是被你稳了一下，深吸口气：「行，那咱就冲复试。」',
+      wrong:'你答偏了。他沉默两秒，自己把答案补上，声音很轻：「……不过也没关系，反正都得熬。」'},
+  s3:{type:'story', who:'【插曲 · 夜班】',
+      text:'你发现沈确白天总犯困。有天提前去图书馆，撞见他在桌上趴着睡着了，手机亮着，锁屏是一张你没见过的校园照片。\n后来你才拼凑出：他在便利店上夜班贴补生活费，妈妈每周打电话问进度，他每次都说「还行」。\n他醒来发现你在，有点尴尬，把手机扣下：「……别告诉我妈。」',
+      choices:[
+        {t:'「夜班别太拼，身体扛不住」', fx:{bond:2}, next:'w5'},
+        {t:'「那张照片，是你想去的学校？」', fx:{bond:1}, next:'w5'},
+        {t:'「你瞒我这么多」', fx:{doubt:1}, next:'w5'},
+      ]},
+  w5:{type:'word', pack:'speak', fixed:'express', next:'c2', who:'【第二章 · 口语】',
+      text:'复试要考口语，沈确怂了——他读写还行，一开口就结巴。\n他让你念词，他听，自己却不肯先说。你逼他：「你先来。」他憋了半天，红着耳朵开了口。\n「你来考我，」他说，「念错你别笑。」',
+      right:'他跟着你念完，居然没卡。他抬头看你，眼睛亮了一下：「……好像没那么难。」',
+      wrong:'他又结巴了，脸色发窘。你没笑，只把那个词又拆给他听：「慢慢来，不急。」'},
+  ch2:{type:'chapter', who:'【第二章 · 完】',
+      text:'复试那两周，他瘦了一圈。你陪他练口语，从结巴到能说完整句——其实你开口也慌，只是硬撑着先示范，好让他跟着学。\n他还是不会说好听的话，但会在你熬夜时，默默把那支快没水的笔换了新的。\n—— 第二章 完 ——',
+      fluent:'（你后来看他复试录像，那句英文自我介绍说得稳稳的——他真把结巴熬过去了。）',
+      next:'w6'},
+  w6:{type:'word', pack:'study', fixed:'recall', next:'s4', who:'【第三章 · 拟录取】',
+      text:'复试过去一个多月。三月底，拟录取名单出来了。你们都上了。沈确看着屏幕，半天冒出一句：「请你吃饭吧，我夜班攒了点。」\n他拿过你的单词本，翻到第一页，指着一个词：「这个，当初你卡了半天那个——现在还会忘吗？」',
+      right:'你利落答上来。他笑了一下，很少见的那种：「看，早就会了，当初慌什么。」',
+      wrong:'你还是顿了一下。他拍拍那页：「忘了就忘了，反正都考上了。」'},
+  s4:{type:'story', who:'【插曲 · 最后一次长桌】',
+      text:'拟录取后反倒空落落的。家里一直催你回老家考个安稳，你烦，有天就随口说以后可能去别的城市——其实是拿这话刺他，不是真想走。沈确脸一下子沉了，闷头背词不接话——他这人就这样，越在意越说不出，只会冷着。\n你也有点恼，又有点后悔。僵到闭馆，他忽然把你那支笔的笔帽按紧了（你总掉），低声说：「……别随便说走。」',
+      choices:[
+        {t:'「我没说一定走。先吃饭」', fx:{bond:2}, next:'a2'},
+        {t:'「你生什么气，我又没定」', fx:{doubt:1}, next:'a2'},
+        {t:'不理他，自己收拾东西先走', fx:{doubt:2}, next:'a2'},
+      ]},
+  w7:{type:'word', pack:'apart', fixed:'abandon', next:'end', who:'【第三章 · 最后的选择】',
+      text:'毕业前最后一天，你又坐到老位置。沈确把那张写了很久的纸条推过来，上面只有一个词，画了圈。\n「这次换我问你，」他说，「答上来，我就把去年撤回那句，补上。」',
+      right:'你念出那个词，他忽然笑了：「就这词。我去年撤回那句——」他顿了顿，「要是都考上了，别随便说走。」',
+      wrong:'你没答上来。他等了一会儿，把纸条折好：「……先吃饭。」——那个词，你后来才真正记住。'},
+  c1:{type:'cluster', who:'【第一章 · 那些词】', packs:['study','general','love'], next:'ch1',
+      text:'长桌的日子，除了被荧光笔圈住那个词，你还在这张桌上卡过别的。沈确把本子翻到一页：「这几个，你也顺便记记——别光盯着我画横线的那个。」'},
+  c2:{type:'cluster', who:'【第二章 · 那些词】', packs:['hard','speak'], next:'ch2',
+      text:'查分之后到复试之间，你们互相考的词越来越多。沈确说：「这些我都替你标了，你挑着背，咱俩谁先会谁教谁。」'},
+  c3:{type:'cluster', who:'【第三章 · 那些词】', packs:['study','apart','career','time','nature'], next:'w7',
+      text:'拟录取之后，你翻回单词本第一页，发现当初随手记的词好多还生着。他指给你看：「这些，考完也别扔。」'},
+  a1:{type:'story', who:'【第一章 · 考后】',
+      text:'考完那阵你们没急着走。他低头把笔盖旋好，耳朵还红着，忽然说：「……刚才那句，我本来想考完就说的。」\n你递过去半瓶水，指尖碰到他手背，两个人都顿了一下。他没接话，把水接过去，指节微微收紧——你第一次觉得，有些话不用念准意思，也能懂。',
+      choices:[
+        {t:'「那句，留着以后说也行。」', fx:{bond:1}, next:'c1'},
+        {t:'「你耳朵红了。」', fx:{bond:2}, next:'c1'},
+        {t:'「……我先走了。」', fx:{doubt:1}, next:'c1'},
+      ]},
+  a2:{type:'story', who:'【第三章 · 最后一次长桌】',
+      text:'闭馆铃响，他按紧你那支笔的笔帽，低声「别随便说走」。你本来有点恼，听他这一句，忽然伸手，把他的手背轻轻按了一下。\n「我没说一定走。」你没看他的眼睛，「你别老把话咽回去。」他手僵了半秒，慢慢翻过来，掌心贴了贴你的——很轻，像怕吓跑什么。',
+      choices:[
+        {t:'「走，先吃饭。」', fx:{bond:2}, next:'c3'},
+        {t:'「……你手好凉。」', fx:{bond:1}, next:'c3'},
+        {t:'「别误会，我就是随手。」', fx:{doubt:1}, next:'c3'},
+      ]},
+  end:{type:'end'}
+};
+const storyStorm={
+  st1:{type:'story', face:'zhou', who:'【番外 · 风波 · 周屿出现】（主线·第三章拟录取之后）',
+      text:'考研最后那段，你老家那边来了个人——周屿。跟你一起长大的发小，体面，会说话，说他爸帮你问好了老家的单位，「挺稳的，你回去我们也都有照应」。\n他笑起来很周全，站你桌边和你聊以后，余光扫过对面空着的位子——那是沈确的。你有点慌，也有点被说动：回去，好像真的省心。',
+      choices:[
+        {t:'「我还没想好。」', fx:{bond:1}, next:'stw1'},
+        {t:'「这事我自己定。」', fx:{bond:1}, next:'stw1'},
+        {t:'「你别跟我家里说。」', fx:{doubt:1}, next:'stw1'},
+      ]},
+  stw1:{type:'word', pack:'study', fixed:'tempt', next:'st2', who:'【番外 · 周屿】',
+      text:'周屿 凑近看你单词书，说「我也能帮你看看，以后用得着」。他指了个词让你念——你忽然觉得，他靠得太近了，近得不像只是在帮你学习。',
+      right:'你念准了。他笑「还是你厉害，不像有些人，只会死记硬背」——他没指名，但你听得出来在说谁。你皱了下眉。',
+      wrong:'你没念准。他「没事，我教你」，手覆过来帮你指那个词，指尖压在你手背上，停了一瞬。你把手抽回来。'},
+  st2:{type:'story', who:'【番外 · 风波 · 种刺】',
+      text:'周屿 的话在你心里种了根刺。你回图书馆，沈确 已经在位子上，看你脸色不对，轻声问了句「怎么了」。你莫名烦躁：「你别管。」\n他手顿了顿，把笔帽一下一下按紧——他最怕的事，好像要发生了。',
+      choices:[
+        {t:'「……我刚才有点烦，不是冲你。」', fx:{bond:1}, next:'stw2'},
+        {t:'「你少操心我。」', fx:{doubt:2}, next:'stw2'},
+        {t:'不说话，把耳机戴上。', fx:{doubt:1}, next:'stw2'},
+      ]},
+  stw2:{type:'word', pack:'apart', fixed:'distance', next:'st3', who:'【番外 · 沈确】',
+      text:'沈确 没再问。他把单词本推过来，指着一个词，半天没说话。你忽然懂了——他在用这个词，量你们之间的距离。',
+      right:'你答上来。他「嗯」了声，手却把那张写了半截的纸条，往回抽了抽。',
+      wrong:'你答不上来。他没纠正，只说「算了」——他很少说算了，说算了的时候，其实是最难受的时候。'},
+  st3:{type:'story', who:'【番外 · 风波 · 误会】',
+      text:'周屿 约你吃饭。你犹豫了下还是去了，出门撞见沈确——他正抱着一摞书往这边走，看见你们并肩，脚步停了。\n周屿 自然地揽了下你肩膀：「走吧。」沈确 看了一眼，什么也没说，只「行，那我先撤」。你喉咙一紧，想喊，又喊不出口。',
+      choices:[
+        {t:'「沈确你别走。」', fx:{bond:2}, next:'stw3'},
+        {t:'「你误会了，我跟他不熟。」', fx:{bond:1}, next:'stw3'},
+        {t:'「你要走就走。」', fx:{doubt:2}, next:'stw3'},
+      ]},
+  stw3:{type:'word', pack:'speak', fixed:'reconcile', next:'st4', who:'【番外 · 沈确】',
+      text:'你追出去，沈确 站在走廊尽头。你把那个词念给他听——借这个词，把刚才没说出口的话，一点点考开。',
+      right:'你念准了。他停住，「……你刚才那句，再说一遍。」你把周屿 的事说清：他是老家一起长大的，想拉你回去，你没答应。他别过头，耳根红了。',
+      wrong:'你又结巴了。他「连这个都卡，你心里到底想什么呢。」你急得眼眶发涩，一把抓住他袖子：「你先别走。」'},
+  st4:{type:'story', who:'【番外 · 风波 · 说开】',
+      text:'你把话说开：周屿 是老家一起长大的，你对他没那个意思，也没答应跟他回去。沈确 别扭地「哦」了一声，把那张写了很久的纸条推过来——上面就四个字：「别跟他走」。\n后来你当着他的面，把周屿 的微信删了。风波过去，你们之间，是更结实了，还是裂了道缝，看你刚才怎么选的。',
+      choices:[
+        {t:'「我跟他说清楚了，以后没有他。」', fx:{bond:2}, next:'stc'},
+        {t:'「你刚才，是不是吃醋了。」', fx:{bond:1}, next:'stc'},
+        {t:'「你也太容易放手了。」', fx:{doubt:1}, next:'stc'},
+      ]},
+  stc:{type:'cluster', who:'【番外 · 那些卡住的词】', packs:['love','apart','speak','study'], next:'end',
+      text:'这场风波里，你卡住过的词，不止那几个。沈确 把本子翻给你看：「这些，都是你一慌就记不住的——以后慌了，先看我。」'},
+  end:{type:'end'}
+};
+const storyGirl={
+  g1:{type:'story', face:'lin', who:'【番外 · 误会 · 林晚出现】（主线·第一章长桌期间）',
+      text:'同系有个女生叫林晚，打一开始就明晃晃喜欢沈确——总端着杯子凑过来问问题，笑得甜，话也密。\n这天你刚到，就看见她挨着沈确坐，身子微微偏过去：「这个我老是记混，你再帮我讲一遍嘛。」沈确 没多想，真给她讲起来。你手里的书捏紧了，嗓子发干——你忽然很不喜欢这个画面。',
+      choices:[
+        {t:'「……我来了，你接着讲。」', fx:{bond:1}, next:'gw1'},
+        {t:'「沈确你讲题还挺耐心。」', fx:{bond:1}, next:'gw1'},
+        {t:'转身去别的位子坐下。', fx:{doubt:1}, next:'gw1'},
+      ]},
+  gw1:{type:'word', pack:'speak', fixed:'attract', next:'g2', who:'【番外 · 林晚】',
+      text:'林晚 听他讲题，眼睛亮亮地盯着他，末了说「你讲得比老师清楚」。沈确 耳根有点红，没接话。你看着那个词，心里像被什么东西轻轻拽了一下——你不想承认，那叫在意。',
+      right:'你念准了。林晚 回头冲你笑：「你俩天天坐一起，也教教我嘛。」你扯了下嘴角，没说是教还是被教。',
+      wrong:'你卡了一下。林晚 自然地接过去「这个词我也不会，正好一起背」——她太会了，自然得让你插不进话。'},
+  g2:{type:'story', who:'【番外 · 误会 · 种刺】',
+      text:'后来你发现，林晚 总「恰好」出现在沈确 在的地方：他排队她递水，他值日她留下来帮忙。沈确 不是没察觉，只是他太钝，只当同学热心。\n你越看越酸，有回沈确 说「晚上小组要碰下」，没提有她——你闷了一整天。',
+      choices:[
+        {t:'「小组……都有谁啊？」', fx:{bond:1}, next:'gw2'},
+        {t:'「你去呗，我没空。」', fx:{doubt:2}, next:'gw2'},
+        {t:'「她是不是喜欢你。」', fx:{bond:1}, next:'gw2'},
+      ]},
+  gw2:{type:'word', pack:'emotion', fixed:'jealous', next:'g3', who:'【番外 · 你】',
+      text:'你赌气把单词本翻得哗啦响。沈确 看了你一眼，终于慢半拍地问：「你……是不是不高兴。」你嘴硬，可那个词一出口，连自己都听出酸味。',
+      right:'你答上来，别过脸：「没有，我就是背不下来。」他「哦」了一声，半天补了句「小组就三个人，没她——我随口漏了」。',
+      wrong:'你答不上来。他也没逼你，只把你翻乱的本子理平：「你这样，我反而背不进去。」'},
+  g3:{type:'story', who:'【番外 · 误会 · 升级】',
+      text:'偏巧第二天，你撞见沈确 把伞往林晚 那边递，她笑着接了，还顺手挽了下他袖子：「那明天还一起？」他「嗯」了一声。\n你脑子一下热了——原来不是你想多。你掉头就走，他喊了你一声，你没停。',
+      choices:[
+        {t:'「沈确，你过来。」', fx:{bond:2}, next:'gw3'},
+        {t:'「你们聊，我先走了。」', fx:{doubt:2}, next:'gw3'},
+        {t:'「对她，你就这么上心。」', fx:{doubt:1}, next:'gw3'},
+      ]},
+  gw3:{type:'word', pack:'apart', fixed:'misunderstand', next:'g4', who:'【番外 · 沈确】',
+      text:'你把他拽到走廊，借这个词，把憋了一路的误会，一点点考开——你以为他动了心，他以为你在闹脾气。',
+      right:'你念准了。他愣了下，忽然笑出来：「你……这是吃醋？」你耳根烧了，他伸手把你被风吹乱的刘海拨了拨：「傻不傻，我是怕你多想，才没提她。」',
+      wrong:'你又结巴。他也不急，就看着你：「你说完我再讲。我那天递伞，是她没带，顺手的事；小组真没她，我记岔了。」'},
+  g4:{type:'story', who:'【番外 · 误会 · 说开】',
+      text:'话摊开了，你才知道：沈确 根本没往那方面想，林晚 是同学也是朋友，但他心里早有别人——他没说谁，可目光落你身上，停了一瞬。\n林晚 后来也找过你，笑眯眯：「我就知道你喜欢他，加油啊。」你这才懂，她那些「亲近」，多半是你自己点起来的火。',
+      choices:[
+        {t:'「……那，以后小组带上我。」', fx:{bond:2}, next:'gc'},
+        {t:'「你才吃醋。」', fx:{bond:1}, next:'gc'},
+        {t:'「你太迟钝了。」', fx:{doubt:1}, next:'gc'},
+      ]},
+  gc:{type:'cluster', who:'【番外 · 那些卡住的词】', packs:['love','apart','speak','emotion'], next:'end',
+      text:'这场误会里，你卡住过的词，不止那几个。沈确 把本子翻给你看：「这些，都是你一吃醋就记不住的——以后慌了，先看我。」'},
+  end:{type:'end'}
+};
+const storyBoth={
+  b1:{type:'story', faces:['zhou','lin'], who:'【番外 · 合流 · 同一周】（主线·第三章拟录取之后）',
+      text:'拟录取之后那段空落落的日子里，周屿 来学校住了几天——嘴上说「顺路看看你」，其实是想劝你回老家。偏巧 林晚 也照常来图书馆，挨着 沈确 问问题、笑眯眯。\n这天你同时见着他俩：周屿 笑眯眯跟你聊「以后回老家多好」，林晚 在隔壁桌挨着 沈确 说「这个你再教教我」。你夹在中间，头都大了——一个想把你拉走，一个把 沈确 黏得紧紧的。',
+      choices:[
+        {t:'「你们俩，能不能别凑一块儿。」', fx:{bond:1}, next:'bw1'},
+        {t:'「……我先去背词了。」', fx:{doubt:1}, next:'bw1'},
+        {t:'不说话，默默坐到最远的位子。', fx:{doubt:1}, next:'bw1'},
+      ]},
+  bw1:{type:'word', pack:'emotion', fixed:'conflict', next:'b2', who:'【番外 · 合流】（主线·第三章拟录取之后）',
+      text:'周屿 凑过来：「你看，人家 沈确 也没空理你，跟我还聊得来。」你瞥见 林晚 正把 沈确 的笔记本往自己那边挪。两个人，一个明拉，一个暗黏，你被夹在中间，像被两股劲儿往反方向扯。',
+      right:'你念准了。周屿 「行，你厉害」，摊手退半步；你转头去看 沈确，他正淡淡把本子抽回来——他也在烦。',
+      wrong:'你卡了一下。林晚 自然地接话「这个词我也不会」，把 沈确 的注意力又拽了过去；周屿 在旁边笑「你看」。'},
+  b2:{type:'story', who:'【番外 · 合流 · 两头不是人】（主线·第三章拟录取之后）',
+      text:'周屿 约你周末回老家看看，「就两天，爸妈都想见你」。话音刚落，林晚 恰好端着杯子过来，听见了，酸溜溜一句：「你就这么急着走啊。」\n沈确 在旁边，手里的笔顿了顿，脸色沉下来。你左边是 周屿 的「回不回」，右边是 林晚 一句话点起的火——两头都不是人。',
+      choices:[
+        {t:'「我没说要走。」', fx:{bond:2}, next:'bw2'},
+        {t:'「……我自己的事。」', fx:{bond:1}, next:'bw2'},
+        {t:'「你管得着吗。」（对林晚）', fx:{doubt:2}, next:'bw2'},
+      ]},
+  bw2:{type:'word', pack:'apart', fixed:'withdraw', next:'b3', who:'【番外 · 合流 · 沈确】（主线·第三章拟录取之后）',
+      text:'沈确 果然「先撤」了——他抱起书去了另一张桌。周屿 还在你耳边「体贴」：「你看，他也没多留。回老家多踏实。」\n你看着 沈确 的背影，忽然很想把手收回來。这个词，是你现在最想做的——从这场乱里，抽身。',
+      right:'你答上来。你深吸一口气，没跟 周屿 走，也没冲 林晚 发火，只走向 沈确 那桌坐下：「……我也不想走。」他笔尖停了。',
+      wrong:'你答不上来。周屿 的手搭上你肩「走吧，别在这儿受气」——你肩膀一僵，第一次有点动摇。'},
+  b3:{type:'story', who:'【番外 · 合流 · 将了一军】（主线·第三章拟录取之后）',
+      text:'林晚 真把 沈确 拉去小组讨论了，周屿 在旁边「好心」补刀：「人家俩多合拍，你就别凑了。」\n你被将了一军：跟上去，像在吃醋闹脾气；不跟，又等于把 沈确 推给 林晚。你攥着笔，手心全是汗。',
+      choices:[
+        {t:'跟上去，坐到沈确旁边。', fx:{bond:2}, next:'bw3'},
+        {t:'「沈确，你过来一下。」', fx:{bond:1}, next:'bw3'},
+        {t:'「你们聊，我背我的。」', fx:{doubt:2}, next:'bw3'},
+      ]},
+  bw3:{type:'word', pack:'study', fixed:'balance', next:'b4', who:'【番外 · 合流 · 你】（主线·第三章拟录取之后）',
+      text:'你借这个词，把心里那杆秤，一点点考给自己听——一边是老家的安稳和 周屿 的情分，一边是 沈确 和这座城市。你怎么周旋，怎么平衡，全看你刚才怎么选。',
+      right:'你念准了。你终于对 周屿 说「我不回去」，又对 沈确 说「她只是同学，我盯着，是因为在意你」。两个人都愣了。',
+      wrong:'你又结巴。沈确 回头看你，眼神软了半分；周屿 叹气「你啊」。你急得眼圈发红，一把抓住 沈确 的袖子：「你先别走。」'},
+  b4:{type:'story', who:'【番外 · 合流 · 说开】（主线·第三章拟录取之后）',
+      text:'你把两边都摊开了：跟 周屿 说清，你不回去，你们是发小，但不是他要的「以后」；跟 沈确 说清，林晚 只是同学，你那些酸，是因为你在意他。\n周屿 笑了笑，说「行，我懂了」，订了回老家的票。林晚 也眨眨眼「知道啦，你俩的事」——退成了普通同学。你看着 沈确，长出一口气：「别走，也别多想。」',
+      choices:[
+        {t:'「周屿回去了，你也别撤了。」', fx:{bond:2}, next:'bc'},
+        {t:'「你刚才，是不是也吃醋了。」', fx:{bond:1}, next:'bc'},
+        {t:'「你们俩可真会添乱。」', fx:{doubt:1}, next:'bc'},
+      ]},
+  bc:{type:'cluster', who:'【番外 · 那一周卡住的词】（主线·第三章拟录取之后）', packs:['love','apart','speak','emotion','study'], next:'end',
+      text:'这一周，你卡住过的词，比哪条线都多。沈确 把本子合上：「这些，都是你一乱就记不住的——以后慌了，先看我，也看你自己。」'},
+  end:{type:'end'}
+};
+const storyGrad={
+  gd1:{type:'story', who:'【番外 · 读研后 · 搬进有窗的房】（主线·第三章拟录取之后）',
+      text:'拟录取之后，你们真的搬去了一间有窗的房子——不大，但朝南，冬天能晒到太阳。开学前最后那阵，你俩窝在窗边背书，他依旧留着靠窗的位置，只是这次，那个位子旁边，坐的是你。\n有天你卡在一个老词上，翻来覆去记不住。他把笔帽转了一下，把单词本推过来——和一年前那张长桌上一模一样。\n「这个，」他没抬头，「你现在答准了，我就信你真把考研熬出来了。」',
+      choices:[
+        {t:'「行，你听好。」', fx:{bond:2}, next:'gdw1'},
+        {t:'「我早就记得了，故意卡你的。」', fx:{bond:1}, next:'gdw1'},
+        {t:'「……你那时候，怎么就信了。」', fx:{bond:1}, next:'gdw1'},
+      ]},
+  gdw1:{type:'word', pack:'study', fixed:'recall', next:'gd2', who:'【番外 · 读研后】',
+      text:'你念出那个词。他挑了下眉，把笔记本往你那边推了半寸——和一年前一样，只是这次没说「算你这次在背」，而是补了句「……现在背，是为了你自己。」\n你有点想笑，又有点鼻酸。考研那根弦，好像终于松了。',
+      right:'你利落答上来。他「嗯」一声，把那页折了个角：「这词，留着当纪念。」',
+      wrong:'你居然还顿了一下。他笑：「看，还是老样子。」'},
+  gd2:{type:'story', who:'【番外 · 读研后 · 夜读如旧】',
+      text:'读研比考研松一点，但课也不少。有天你赶作业到半夜，他端了杯热的过来，放你手边，没说话，自己坐到窗边翻文献。\n你忽然想起一年前那个戴耳机的傍晚——他也是这么，安静地陪着你，不声不响。\n「你」，你叫住他，「以前那个耳机，还在吗。」他顿了顿：「早没磁带了。但歌还在。」',
+      choices:[
+        {t:'「那再分我一只。」', fx:{bond:2}, next:'gdw2'},
+        {t:'「你那时候，是不是也慌。」', fx:{bond:1}, next:'gdw2'},
+        {t:'「……不用，你忙你的。」', fx:{doubt:1}, next:'gdw2'},
+      ]},
+  gdw2:{type:'word', pack:'speak', fixed:'express', next:'gd3', who:'【番外 · 读研后】',
+      text:'你逼他把最近组会汇报练一遍。他读写还行，一开口 Presentation 还是有点紧。你「你先来」，他憋了半天，红着耳朵开了口。\n「你来考我，」他说，「念错你别笑——和以前一样。」',
+      right:'他跟着你念完，居然没卡。他抬头看你，眼睛亮了一下：「……好像，一直都因为你才敢开口。」',
+      wrong:'他又结巴了，脸色发窘。你没笑，只把那个词又拆给他听：「慢慢来，不急——和以前一样。」'},
+  gd3:{type:'story', who:'【番外 · 读研后 · 关于未来】',
+      text:'研一快结束，家里又来电话，还是那套「回老家安稳点」。你握着手机，看了一眼窗边的他。\n他低头背词，像没听见，可笔帽一下一下按得比平时重——他最怕的，还是你要走。\n你想起一年前那句「别随便说走」。这次，你没绕弯。',
+      choices:[
+        {t:'「妈，我不回去了，这儿挺好。」', fx:{bond:2}, next:'gdw3'},
+        {t:'「再说吧，我现在挺好的。」', fx:{bond:1}, next:'gdw3'},
+        {t:'「……你先别管我。」', fx:{doubt:2}, next:'gdw3'},
+      ]},
+  gdw3:{type:'word', pack:'apart', fixed:'abandon', next:'gdc', who:'【番外 · 读研后】',
+      text:'你挂了电话，把那个词念给他听——借这个词，把这一年没说够的「留下」，再考一遍。\n他手里的笔停了。',
+      right:'你念准了。他忽然笑了一下，很少见的那种：「看，今年你没说要走。」他把那支总掉笔帽的笔，轻轻按进你手里。',
+      wrong:'你顿了一下。他没催，只把笔帽按紧：「……慢慢想，我不急。」'},
+  gdc:{type:'cluster', who:'【番外 · 读研后 · 那些还在背的词】', packs:['study','love','apart','speak'], next:'end',
+      text:'读研的日子，你们还是天天卡词。他翻出本子：「这些，都是你一慌就记不住的——不过现在慌了，先看我，也看你自己。」'},
+  end:{type:'end'}
+};
+const GRAPHS={'main':story,'storm':storyStorm,'girl':storyGirl,'both':storyBoth,'grad':storyGrad};
+let curStory=story; let curGraph='main';
+function scaleHTML(){
+  const n=net(); const pct=Math.max(4,Math.min(96,50+n*9));
+  let h='你们之间，还看不出什么。（已背 '+reviewed+' 词）';
+  if(n>=3) h='他好像比你想的，更在意你一点。（已背 '+reviewed+' 词）';
+  else if(n<=-3) h='你们之间，好像隔着点什么。（已背 '+reviewed+' 词）';
+  return `<div class="scale"><div class="lab"><b>光明 · HE</b><i>阴影 · BE</i></div><div class="track"><div class="needle" style="left:${pct}%"></div></div><div class="hint">${h}</div></div>`;
+}
+function sStats(){return `<div class="stats"><span>羁绊 ${s.bond}</span><span>误会 ${s.doubt}</span><span>已背 ${reviewed} 词</span></div>`;}
+function refreshScaleStats(){ const sc=document.querySelector('.scale'); if(sc) sc.outerHTML=scaleHTML(); const st=document.querySelector('.stats'); if(st) st.outerHTML=sStats(); }
+function shenFluent(){ return (loadP().shenSpoken||0) >= 3; }
+
+function renderStoryStart(){
+  curView='story';
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+    +`<div class="mode">
+      <button class="${mode==='random'?'on':''}" onclick="mode='random';renderStoryStart()">随缘</button>
+      <button class="${mode==='he'?'on':''}" onclick="mode='he';renderStoryStart()">指定HE</button>
+      <button class="${mode==='be'?'on':''}" onclick="mode='be';renderStoryStart()">指定BE</button></div>`
+    + srcBar()
+    +`<div class="scene"><div class="who">【开始】</div>      <div class="txt tw">三章主线：你和沈确，两个都不会好好说话的普通考研人。从倒计时的长桌，到出分、复试，再到春天拟录取。\n剧情里夹着些没说出口的暧昧——他耳红、你碰他手背、闭馆那句「别随便说走」。单词关按主题抽词，每章还会随机抽 3~5 个当章主题词，所以每次玩词都不一样。答对→偏 HE，答错→偏 BE。\n另有三条<b>番外</b>，都标了发生在主线第几章之后：<b>风波</b>（第三章拟录取之后）——老家发小周屿想把你拉回老家；<b>误会</b>（第一章长桌期间）——同系甜妹林晚喜欢沈确，总点起误会；<b>合流</b>（第三章拟录取之后）——同一周周屿和林晚同框，你被两头将了一军。三场风波里卡住的词，都由你选怎么填。另有 **读研后**（第三章拟录取之后）——搬进有窗的房，读研日常，把「留下」再考一遍。\n选好模式与词源，开始。</div>
+      <div class="choices"><button class="choice" onclick="startStory('main')">▶ 开始主线故事</button><button class="choice" onclick="startStory('storm')">🌊 番外·风波（周屿）</button><button class="choice" onclick="startStory('girl')">🌸 番外·误会（林晚）</button><button class="choice" onclick="startStory('both')">🔥 番外·合流（周屿&林晚）</button><button class="choice" onclick="startStory('grad')">🏠 番外·读研后（有窗的房）</button></div></div>`;
+  typeWrite();
+}
+function startStory(g){ curGraph=g||'main'; curStory=GRAPHS[curGraph]; s={bond:0,doubt:0}; reviewed=0; sceneId=(curGraph==='storm')?'st1':(curGraph==='girl')?'g1':(curGraph==='both')?'b1':'w1'; window._cluster=null; curView='story'; renderScene(sceneId); }
+function renderScene(id){
+  const sc=curStory[id];
+  if(sc.type==='word') return askWord((ok)=>{
+    if(ok) s.bond+=2; else s.doubt+=1; reviewed++;
+    refreshScaleStats();
+    const box=document.getElementById('cont'); box.style.display='block';
+    const branch = ok ? (sc.right||'') : (sc.wrong||'');
+    const col = ok ? 'var(--he)' : 'var(--be)';
+    box.innerHTML=`<div class="txt tw" style="font-size:14px;line-height:1.85;margin:4px 0 12px;white-space:pre-wrap;color:${col}">${branch}</div><div class="choices"><button class="choice" onclick="afterWord('${sc.next}')">继续 →</button><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button></div>`;
+    typeWrite();
+  }, true, sc.pack, sc.fixed, sc);
+  if(sc.type==='cluster'){
+    const n = 3 + Math.floor(Math.random()*3); // 每章随机 3~5 个主题词
+    const anchors=['acquaint','persist','confess','endure','express','recall','abandon','tempt','distance','reconcile','attract','jealous','misunderstand','conflict','withdraw','balance'];
+    let pool=[]; (sc.packs||['general']).forEach(pk=> pool=pool.concat(packList(pk)));
+    pool = shuffle(pool.filter(w=> w[0] && !anchors.includes(w[0]))).slice(0,n);
+    window._cluster={words:pool, i:0, next:sc.next};
+    root.innerHTML=scaleHTML()+`<div class="scene"><div class="who">${sc.who}</div>${(sc.faces?sc.faces.map(f=>'<div class="zface">'+faceSVG(f)+'</div>').join(''):(sc.face?('<div class="zface">'+faceSVG(sc.face)+'</div>'):''))}<div class="txt tw">${sc.text}</div>${sStats()}<div class="choices"><button class="choice" onclick="clusterAsk()">▶ 开始这章的单词（${n} 个）</button><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button></div></div>`;
+    typeWrite();
+    return;
+  }
+  if(sc.type==='chapter'){
+    const extra = (sc.fluent && shenFluent()) ? '\n'+sc.fluent : '';
+    root.innerHTML=scaleHTML()+`<div class="scene"><div class="who">${sc.who}</div>${(sc.faces?sc.faces.map(f=>'<div class="zface">'+faceSVG(f)+'</div>').join(''):(sc.face?('<div class="zface">'+faceSVG(sc.face)+'</div>'):''))}<div class="txt tw">${sc.text}${extra}</div>${sStats()}<div class="choices"><button class="choice" onclick="afterWord('${sc.next}')">继续 →</button><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button></div></div>`;
+    typeWrite(); return;
+  }
+  let ch=sc.choices.map((c,i)=>`<button class="choice" onclick="pick(${i})">${c.t}</button>`).join('');
+  const backBtn=`<button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button>`;
+  root.innerHTML=scaleHTML()+`<div class="scene"><div class="who">${sc.who}</div>${(sc.faces?sc.faces.map(f=>'<div class="zface">'+faceSVG(f)+'</div>').join(''):(sc.face?('<div class="zface">'+faceSVG(sc.face)+'</div>'):''))}<div class="txt tw">${sc.text}</div>${sStats()}<div class="choices">${ch}${backBtn}</div></div>`;
+  typeWrite();
+}
+function pick(i){ const sc=curStory[sceneId]; const c=sc.choices[i]; for(const k in c.fx) s[k]+=c.fx[k]; sceneId=c.next; renderScene(c.next); }
+function afterWord(next){ sceneId=next; if(next==='end') renderEnd(); else renderScene(next); }
+function clusterAsk(){
+  const c=window._cluster;
+  if(!c || c.i>=c.words.length){ const nx=c?c.next:'end'; window._cluster=null; afterWord(nx); return; }
+  const w=c.words[c.i]; c.i++;
+  askWord((ok)=>{
+    if(ok) s.bond+=1; reviewed++; refreshScaleStats();
+    const box=document.getElementById('cont'); box.style.display='block';
+    const last = (c.i>=c.words.length);
+    box.innerHTML=`<div class="choices"><button class="choice" onclick="clusterAsk()">${last?'这章的词完了 →':'下一个 →'}</button><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button></div>`;
+  }, true, null, w);
+}
+function renderEnd(){
+  const e=(curGraph==='storm')?resolveStorm():(curGraph==='girl')?resolveGirl():(curGraph==='both')?resolveBoth():(curGraph==='grad')?resolveGrad():resolve();
+  const p=loadP(); p.cleared=true; saveP(p);
+  root.innerHTML=scaleHTML()+`<div class="ending ${e.cls}"><div class="tag">${e.tag}</div><h2>${e.title}</h2><p>${e.body}</p>${sStats()}<div class="choices"><button class="restart" onclick="renderStoryStart()">↺ 换个答法，重玩</button><button class="restart" onclick="renderMenu()">返回首页</button></div></div>`;
+}
+function resolve(){ if(mode==='he') return he(); if(mode==='be') return be(); return net()>=1?he():be(); }
+function he(){
+  const p=loadP();
+  const sweet = s.doubt<=1;
+  const title = sweet ? '考上之后' : '也算是好的';
+  let body = sweet
+    ? '你答上来了。沈确把那张纸条翻过来，上面是他考前夜撤回的那句：「要是都考上了，要不要一起换个有窗的房子。」\n你忽然想起，自己考前夜也打过一行字，又删了——「要是都考上了，我哪儿都不去。」你没说出口，手却先伸过去，把那支总掉笔帽的笔握住了。\n窗外的天快黑了，你们谁都没急着走。考研的事还没出结果，但那一刻不像在等审判。'
+    : '你答得磕磕绊绊，但他没纠正你，只是把纸条收好。「行了，」他说，「意思差不多。」\n你们没说什么动人的话。走出图书馆的时候，他放慢了步子，等你跟上来。';
+  if((p.frag||0)>=5){ body += '\n（后来你们真的搬去了一间有窗的房子。他至今不知道，你那晚删掉的那行字，和他在便利贴背面的，是同一句。）'; }
+  if(shenFluent()){ body += '\n（他复试那句英文自我介绍，是他自己一个词一个词练出来的——结巴到底熬过去了。）'; }
+  if(sweet){ body += '\n（后来你们翻单词本，那些当初卡住的词，都成了只有你们俩懂的暗号。）'; }
+  return {tag:'HAPPY END', title, body:body+'（这一路，你顺手复习了 '+reviewed+' 个词）', cls:'he'};
+}
+function be(){ return {tag:'BAD END', title:'各自南北',
+  body:'沈确等了一会儿，把纸条折好放进口袋：「没事，本来也不一定非说。」\n后来你回了老家，按家里意思考了安稳；他去的另一座城市。很多年后你才想起，最后那天他推过来的词是 abandon——大一英语课本上，你发誓要背下来的第一个词。（这一路，你重温了 '+reviewed+' 个词）', cls:'be'}; }
+function resolveStorm(){
+  const n=net();
+  if(n>=3) return {tag:'风波 · 未散', title:'还是你俩', body:'周屿 成了你联系人里一个被删掉的名字。沈确 后来偶尔拿「你当初要是真跟他走了呢」逗你，你「闭嘴」。那场风波没散你们，反倒让你们把没说出口的，都说了一半。窗外的天快黑了，他放慢步子等你——和主线里一样。（这一场风波，你填了 '+reviewed+' 个词）', cls:'he'};
+  if(n>=-1) return {tag:'风波 · 余震', title:'裂了道缝', body:'误会说了大半，可那句「你要走就走」像根刺。沈确 没再提周屿，只是留位子时，多留了半寸距离。你们没散，也没完全回到从前。考研结束那天，他按了按你笔帽：「……别随便说走。」你没接话。（这一场风波，你填了 '+reviewed+' 个词）', cls:'be'};
+  return {tag:'风波 · 散场', title:'没人留住谁', body:'那天的误会没真正说开。沈确 真的撤了，周屿 没留住你，你也没留住沈确。很多年后你才想起，沈确 最后推过来的那个词是 distance——他早就在用那个词，量你们之间的距离。（这一场风波，你填了 '+reviewed+' 个词）', cls:'be'};
+}
+function resolveGirl(){
+  const n=net();
+  if(n>=3) return {tag:'误会 · 解开', title:'原来是自己点的火', body:'林晚 还是会出现，还是甜，还是主动——但你已经不慌了。沈确 偶尔被她拉去讲题，你就在旁边翻白眼，他回头冲你挑一下眉，你别过脸，嘴角却弯了。\n后来你当着他的面，跟林晚 说「他归我管」。她笑：「知道啦，早看出来了。」那场由你亲手点起来的火，被你亲手按灭。（这一场误会，你填了 '+reviewed+' 个词）', cls:'he'};
+  if(n>=-1) return {tag:'误会 · 余震', title:'留了个小疙瘩', body:'话是说开了，可你偶尔还会想起他递伞那下，心里微微发涩。沈确 没再提林晚，只是每次有人凑过来，他会下意识往你这边靠半寸。你们没散，也没完全回到从前——介意的，好像只有你一个。（这一场误会，你填了 '+reviewed+' 个词）', cls:'be'};
+  return {tag:'误会 · 散场', title:'火没灭干净', body:'你赌的气，到底没全消。林晚 还在他身边出现，你每次看见都像被刺一下，又总憋着不说。沈确 钝，察觉了也只会闷头背词。很多年后你才想起，那场误会里你卡住的词是 jealous——你早就在用那个词，称量自己有多在意他。（这一场误会，你填了 '+reviewed+' 个词）', cls:'be'};
+}
+function resolveBoth(){
+  const n=net();
+  if(n>=3) return {tag:'合流 · 稳住', title:'两边都按灭了', body:'周屿 订了回老家的票，走前拍你肩「好好的」；林晚 也退成了普通同学，再见你俩就眨眨眼溜走。你长出一口气，对 沈确 说「别走，也别多想」——他「嗯」了声，把那支总掉笔帽的笔，轻轻按进你手里。\n这一周乱糟糟的火，被你一手一手按灭。窗外的天快黑了，你们谁都没急着走。（这一场合流，你填了 '+reviewed+' 个词）', cls:'he'};
+  if(n>=-1) return {tag:'合流 · 余震', title:'留了两根刺', body:'话说开了大半，可 周屿 的「回老家」和 林晚 的「存在」，像两根没拔干净的刺。沈确 没再提他俩，只是偶尔留位子时，多留半寸距离。你们没散，也没完全回到从前——介意的，好像还是只有你。（这一场合流，你填了 '+reviewed+' 个词）', cls:'be'};
+  return {tag:'合流 · 散场', title:'两头都没按住', body:'你两头都没按住：周屿 没留住你，也没真走成；沈确 被 林晚 的误会和你的赌气，一点点推开。很多年后你才想起，那一周你卡住的词是 balance——你早就在用那个词，称量自己到底站哪边。（这一场合流，你填了 '+reviewed+' 个词）', cls:'be'};
+}
+function resolveGrad(){
+  const n=net();
+  if(n>=3) return {tag:'读研后 · 安稳', title:'灯还亮着', body:'你们真的在那间有窗的房子里，过了一年又一年。他还是不会说好听的话，还是会按笔帽，还是会在你卡词时把本子推过来。\n只是现在，那个靠窗的位子旁边，永远坐的是你。考研那年的弦松了，可有些东西，反倒更紧了。（这一章读研后，你填了 '+reviewed+' 个词）', cls:'he'};
+  if(n>=-1) return {tag:'读研后 · 余温', title:'还是老样子', body:'你们没说破什么，也没分开。日子照过，词照背，靠窗的位子还是你们的。只是偶尔，你会在挂了家里电话之后，多看他一眼——他低头背词，像什么都没听见。（这一章读研后，你填了 '+reviewed+' 个词）', cls:'be'};
+  return {tag:'读研后 · 走远', title:'窗关上了', body:'你到底还是被「安稳」两个字拽了回去。很多年后你才想起，那一年你卡住的词是 abandon——大一课本上你发誓背下来的第一个词，最后还是用在了自己身上。（这一章读研后，你填了 '+reviewed+' 个词）', cls:'be'};
+}
+
+/* ============ 每日陪伴：陪他夜读（覆盖全库的核心循环） ============ */
+let dailyQueue=[], dailyIdx=0, dailyCount=0, dailyOk=0;
+function renderDaily(){
+  curView='daily';
+  const p=loadP(); const um=unmastered();
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button class="on">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+    +`     <div class="scene"><div class="who">【陪他夜读 · 不限次数】</div>
+     <div class="txt tw">考研最后那段日子，沈确总拉你晚上多留半小时，互相考还没背熟的词。\n他推过来一摞你俩都还没记牢的卡片——这些词，才是真会考住人的。背完攒「羁绊碎片」，攒够解锁隐藏结局。随时都能陪他背，不限组数。</div>
+     <div class="prog"><div class="stat"><b>${unmastered().length}</b>未掌握</div><div class="stat"><b>${dueCount()}</b>待复习</div><div class="stat"><b>${p.frag||0}</b>碎片</div><div class="stat">${p.shenSpoken?('已陪 '+p.shenSpoken+' 次'):'还没陪他背过'}</div></div>
+     <div class="choices">
+       <button class="choice" onclick="dailyRun()">▶ 开始夜读（不限次数）</button>
+       <button class="choice" onclick="renderMenu()">← 返回首页</button>
+     </div></div>`;
+  typeWrite();
+}
+function dailyRun(){
+  const cand=dueCandidates(8);
+  if(!cand.length){ root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button class="on">陪他夜读</button><button onclick="renderStats()">进度</button></div><div class="scene"><div class="who">【陪他夜读】</div><div class="txt">你们把整本词都背下来了——再没有谁考住谁的词。沈确把那支笔帽按紧：「行了，睡觉。」</div><div class="choices"><button class="choice" onclick="renderDaily()">返回</button></div></div>`; return; }
+  dailyQueue=shuffle(cand); dailyIdx=0; dailyCount=0; dailyOk=0;
+  dailyNext();
+}
+function dailyNext(){
+  if(dailyIdx>=dailyQueue.length){ dailyFinish(); return; }
+  const w=dailyQueue[dailyIdx];
+  const rr=loadP().words[w[0]];
+  const line = (rr && rr.c>0) ? pickR(SHEN_REVIEW) : pickR(SHEN_NEW);
+  askWord((ok)=>{ dailyCount++; if(ok) dailyOk++; dailyIdx++; dailyNext(); }, false, null, w, {who:'【陪他夜读】', text:line});
+}
+function dailyFinish(){
+  window._cur=null;
+  const p=loadP(); let fragMsg='';
+  p.frag=(p.frag||0)+1; saveP(p); fragMsg='羁绊碎片 +1';
+  if(dailyCount>0){ p.shenSpoken=(p.shenSpoken||0)+1; saveP(p); }
+  const lines=[
+    '「今天这些，明天再漏一个我笑话你。」他合上单词本，灯关了一半。',
+    '他忽然说：「你陪我背，比我自己管用。」说完自己先不好意思了。',
+    '「走了。」他把你的笔帽又按了按，「明天见，别又熬夜。」'
+  ];
+  const msg=lines[Math.floor(Math.random()*lines.length)];
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button class="on">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+   +`<div class="scale"><div class="lab"><b>夜读完成</b></div><div class="hint">本组 ${dailyCount} 词，对 ${dailyOk} ｜ ${fragMsg}</div></div>`
+   +`<div class="scene"><div class="who">【陪他夜读】</div><div class="txt">${msg}</div>
+     <div class="choices"><button class="choice" onclick="renderDaily()">← 返回首页</button><button class="choice" onclick="dailyRun()">再练一组</button></div></div>`;
+}
+
+/* ============ 章节特训：他的错题本（可选任务） ============ */
+let taskQueue=[], taskIdx=0, taskCount=0, taskOk=0;
+let favQueue=[], favIdx=0, favCount=0, favOk=0;
+function favList(){ const p=loadP(); return (p.fav||[]).map(findWord).filter(Boolean); }
+function toggleFav(en){ const p=loadP(); p.fav=p.fav||[]; const i=p.fav.indexOf(en); let on; if(i>=0){ p.fav.splice(i,1); on=false; } else { p.fav.push(en); on=true; } saveP(p); return on; }
+function isFav(en){ return (loadP().fav||[]).indexOf(en)>=0; }
+function favToggle(btn,en){ const on=toggleFav(en); btn.textContent= on?'⭐ 已收藏':'⭐ 收藏'; btn.classList.toggle('fav-on',on); }
+function renderChapterTask(){
+  curView='task';
+  const p=loadP();
+  const wrong=Object.keys(p.words).filter(k=>p.words[k].w>0).map(findWord).filter(Boolean);
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+    +`     <div class="scene"><div class="who">【他的错题本】</div>
+     <div class="txt tw">沈确总记混的词，你帮他测一遍。从你的错词本里抽，答完给羁绊碎片。\n当前易错 ${wrong.length} 词。</div>
+     <div class="choices">
+       <button class="choice" onclick="taskRun()">${wrong.length?'▶ 开始帮他测':'（暂无错词，去夜读或剧情里答错几个）'}</button>
+       <button class="choice" onclick="renderMenu()">返回</button>
+     </div></div>`;
+  typeWrite();
+}
+function taskRun(){
+  const p=loadP();
+  const wrong=Object.keys(p.words).filter(k=>p.words[k].w>0).map(findWord).filter(Boolean);
+  if(!wrong.length){ renderChapterTask(); return; }
+  wrong.sort((a,b)=>{ const ra=p.words[a[0]]||{due:0}; const rb=p.words[b[0]]||{due:0}; return (ra.due||0)-(rb.due||0); });
+  taskQueue=wrong.slice(0, Math.min(8, wrong.length)); taskIdx=0; taskCount=0; taskOk=0;
+  taskNext();
+}
+function taskNext(){
+  if(taskIdx>=taskQueue.length){ taskFinish(); return; }
+  const w=taskQueue[taskIdx];
+  const line=pickR(SHEN_REVIEW);
+  askWord((ok)=>{ taskCount++; if(ok) taskOk++; taskIdx++; taskNext(); }, false, null, w, {who:'【他的错题本】', text:line});
+}
+function taskFinish(){
+  window._cur=null;
+  const p=loadP(); p.frag=(p.frag||0)+1; saveP(p);
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+   +`<div class="scale"><div class="lab"><b>补测完成</b></div><div class="hint">帮他测了 ${taskCount} 个错词，对 ${taskOk} ｜ 羁绊碎片 +1</div></div>`
+   +`<div class="scene"><div class="who">【他的错题本】</div><div class="txt">「这些……谢谢你。」他把本子收好，难得没嘴硬。\n（错词会随着你答对次数变多而移出错词本，下次就不会再抽到。）</div>
+     <div class="choices"><button class="choice" onclick="renderChapterTask()">返回</button><button class="choice" onclick="taskRun()">再测一组</button></div></div>`;
+}
+
+/* ============ 我的收藏（主动收集，与错题本并列） ============ */
+function renderFav(){
+  curView='fav';
+  const list=favList();
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+    +`     <div class="scene"><div class="who">【我的收藏】</div>
+     <div class="txt tw">刷题时看到想反复背的词，点「⭐ 收藏」就能收进来。随时单列出来反复测，答完给羁绊碎片。\n当前收藏 ${list.length} 词。</div>
+     <div class="choices">
+       <button class="choice" onclick="favRun()">${list.length?'▶ 开始练收藏':'（还没有收藏，答题时点 ⭐ 收藏即可加入）'}</button>
+       <button class="choice" onclick="renderMenu()">← 返回首页</button>
+     </div></div>`;
+  typeWrite();
+}
+function favRun(){
+  const list=favList();
+  if(!list.length){ renderFav(); return; }
+  favQueue=list.slice(0, Math.min(8, list.length)); favIdx=0; favCount=0; favOk=0;
+  favNext();
+}
+function favNext(){
+  if(favIdx>=favQueue.length){ favFinish(); return; }
+  const w=favQueue[favIdx];
+  askWord((ok)=>{ favCount++; if(ok) favOk++; favIdx++; favNext(); }, false, null, w, {who:'【我的收藏】', text:pickR(SHEN_REVIEW)});
+}
+function favFinish(){
+  window._cur=null;
+  const p=loadP(); p.frag=(p.frag||0)+1; saveP(p);
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>`
+   +`<div class="scale"><div class="lab"><b>收藏练完</b></div><div class="hint">练了 ${favCount} 个收藏，对 ${favOk} ｜ 羁绊碎片 +1</div></div>`
+   +`<div class="scene"><div class="who">【我的收藏】</div><div class="txt">「这几个你特意留着，倒是上心。」他瞥了一眼你的收藏夹，难得没打岔。\n（答对多了自然就熟了，不想要的也可以在答题时点 ⭐ 取消收藏。）</div>
+     <div class="choices"><button class="choice" onclick="renderMenu()">← 返回首页</button><button class="choice" onclick="favRun()">再练一组</button></div></div>`;
+}
+
+/* ============ 通用答题（四种题型，支持指定 pack / 指定词） ============ */
+function askWord(onAnswer, isStory, pack, force, ctx){
+  let word = force;
+  if(word && !Array.isArray(word)) word = findWord(word);
+  if(!word || !word[0]){
+    let list = pack ? packList(pack) : BANK;
+    if(gSrc!=='all' && isStory){
+      if(gSrc==='high') list=list.filter(w=>BANK.indexOf(w)<BANK.length/3);
+      else if(gSrc==='mid') list=list.filter(w=>{const i=BANK.indexOf(w); return i>=BANK.length/3 && i<2*BANK.length/3;});
+      else if(gSrc==='low') list=list.filter(w=>BANK.indexOf(w)>=2*BANK.length/3);
+      else if(gSrc==='wrong'){ const pp=loadP(); list=list.filter(w=>pp.words[w[0]]&&pp.words[w[0]].w>0); }
+      else if(gSrc==='custom') list=(loadP().custom||[]);
+      if(!list.length) list=packList(pack);
+    }
+    if(!list.length){ root.innerHTML=`<div class="scene"><div class="txt">当前词源暂时没有词。</div></div>`; return; }
+    word=list[Math.floor(Math.random()*list.length)];
+  }
+  let types=['choice','spell','listen','cloze'];
+  let type=types[Math.floor(Math.random()*types.length)];
+  if(type==='listen' && !('speechSynthesis' in window)) type='choice';
+  if(type==='cloze' && !clozeReal(word)) type='choice'; // 无真实例句则回退，绝不出现模板别扭句
+
+  const ctxHtml = (ctx && (ctx.who || ctx.text))
+    ? `<div class="who">${ctx.who||''}</div><div class="txt tw">${(ctx.text||'').replace(/\n/g,'<br>')}</div>`
+    : '';
+
+  const head = isStory
+    ? scaleHTML()+`<div class="scene">${ctxHtml}`
+    : `<div class="prog"><div class="stat">背词中</div><div class="stat"><b>${unmastered().length}</b>未掌握</div></div><div class="scene">${ctxHtml}`;
+  const favBtn = `<button class="choice fav-btn ${isFav(word[0])?'fav-on':''}" onclick="favToggle(this,'${word[0].replace(/'/g,"\\'")}')">${isFav(word[0])?'⭐ 已收藏':'⭐ 收藏'}</button>`;
+  const tail = isStory
+    ? `<div class="choices"><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button>${favBtn}</div>${sStats()}</div>`
+    : `<div class="choices" style="margin-top:10px"><button class="choice" onclick="window._cur=null;renderMenu()">← 返回首页</button>${favBtn}</div></div>`;
+
+  window._cur={word,onAnswer,type};
+
+  if(type==='choice' || type==='listen'){
+    const opts=shuffle([word[2], ...distract(word[0])]);
+    const speakBtn = `<button class="speak" onclick="speak('${word[0].replace(/'/g,"\\'")}')">🔊 ${type==='listen'?'播放发音':'点读单词'}</button>`;
+    root.innerHTML=head+`<span class="qtype">${type==='listen'?'听音选义':'选择题'}</span>
+      <div class="wordcard"><div class="en">${type==='listen'?'🔊 听发音':word[0]}</div><div class="ph">${word[1]}</div></div>
+      ${speakBtn}
+      <div class="txt" style="text-align:center;color:var(--dim);font-size:13px;margin-bottom:6px">选出正确中文释义</div>
+      <div class="choices" id="opts">${opts.map((o,i)=>`<button class="choice" id="o${i}" onclick="ansChoice('${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>
+      <div class="fb" id="fb"></div><div class="choices" id="cont" style="display:none"></div>`+tail;
+    if(type==='listen') setTimeout(function(){ speak(word[0]); }, 300);
+  }
+  else if(type==='spell'){
+    root.innerHTML=head+`<span class="qtype">拼写题</span>
+      <div class="wordcard"><div class="ph">${word[1]}</div><div class="zh">释义：${word[2]}</div></div>
+      <button class="speak" onclick="speak('${word[0].replace(/'/g,"\\'")}')">🔊 点读单词</button>
+      <div class="txt" style="text-align:center;color:var(--dim);font-size:13px;margin:8px 0">根据音标与释义，拼写出英文单词</div>
+      <input class="qinput" id="ans" placeholder="输入英文…" autocomplete="off">
+      <button class="qbtn" onclick="ansText()">提交</button>
+      <div class="fb" id="fb"></div><div class="choices" id="cont" style="display:none"></div>`+tail;
+    setTimeout(function(){ const e=document.getElementById('ans'); if(e) e.focus(); },100);
+  }
+  else {
+    const sent=(cloze(word)||'___').split('｜');
+    root.innerHTML=head+`<span class="qtype">例句填空</span>
+      <div class="wordcard"><div class="zh" style="font-size:15px;line-height:1.7">${sent[0]}</div><div style="font-size:12.5px;color:var(--dim);margin-top:6px">${sent[1]||''}</div></div>
+      <button class="speak" onclick="speak('${word[0].replace(/'/g,"\\'")}')">🔊 点读单词</button>
+      <input class="qinput" id="ans" placeholder="在空格处填入单词原形…" autocomplete="off">
+      <button class="qbtn" onclick="ansText()">提交</button>
+      <div class="fb" id="fb"></div><div class="choices" id="cont" style="display:none"></div>`+tail;
+    setTimeout(function(){ const e=document.getElementById('ans'); if(e) e.focus(); },100);
+  }
+}
+function ansChoice(o){
+  const c=window._cur; if(!c) return;
+  const ok=(o===c.word[2]);
+  const box=document.getElementById('opts');
+  [...box.children].forEach(b=>{ b.disabled=true; if(b.textContent===c.word[2]) b.classList.add('ok'); else if(b.textContent===o) b.classList.add('no'); });
+  const fb=document.getElementById('fb'); fb.textContent=ok?pickFB(GOOD_FB):pickFB(BAD_FB); fb.className=ok?'fb good':'fb bad';
+  if(ok) sfxGood(); else sfxBad();
+  finish(c, ok);
+}
+function ansText(){
+  const c=window._cur; if(!c) return;
+  const v=document.getElementById('ans').value;
+  const ok=(norm(v)===norm(c.word[0]));
+  const fb=document.getElementById('fb');
+  const wc=document.querySelector('.wordcard');
+  if(ok){ fb.textContent=pickFB(GOOD_FB); fb.className='fb good'; if(wc) wc.classList.add('ok'); sfxGood(); }
+  else { fb.textContent='✘ 正确拼写是「'+c.word[0]+'」。'+pickFB(BAD_SPELL_FB); fb.className='fb bad'; if(wc) wc.classList.add('no'); sfxBad(); }
+  finish(c, ok);
+}
+function finish(c, ok){ record(c.word[0], ok); c.onAnswer(ok, c.word); }
+
+/* ============ 进度页 ============ */
+function renderStats(){
+  curView='stats';
+  const s2=stat(); const p=loadP();
+  const wrongList=Object.keys(p.words).filter(k=>p.words[k].w>0).map(k=>{const w=findWord(k); return w?w[0]+' · '+w[2]:k;}).slice(0,40);
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button class="on">进度</button></div>
+    <div class="scene">
+      <div class="who">【我的进度】</div>
+      <div class="prog"><div class="stat"><b>${s2.mastered}</b>已掌握</div><div class="stat"><b>${dueCount()}</b>待复习</div><div class="stat"><b>${s2.wrong}</b>易错</div><div class="stat"><b>${s2.total}</b>累计接触</div><div class="stat"><b>${p.frag||0}</b>碎片</div></div>
+      <div class="txt" style="font-size:13px;color:var(--dim);margin:6px 0 4px">「已掌握」= 累计答对3次且无错；「待复习」= 已学过、按遗忘曲线到该复习的词；「易错」= 曾答错过的词（去「他的错题本」专测）。所有背词都发生在剧情/夜读/错题本里，没有脱离剧情的纯刷题。</div>
+      <div class="sec-title">词库主题分布</div>
+      <div class="pack-chips">${Object.keys(PACK_DEFS).map(k=>`<span class="chip">${PACK_DEFS[k].name}</span>`).join('')}<span class="chip chip-ghost">通用</span></div>
+      <div class="txt" style="font-size:12.5px;color:var(--dim);margin-top:5px">剧情里的单词关按章节主题从这 6 类里抽词，让背的词和故事氛围对得上；其余词都归进「通用」大池子，靠夜读和错题本慢慢覆盖。</div>
+      <div class="txt" style="font-size:13px;font-weight:600;margin-top:10px">易错词预览（最多40）：</div>
+      <div class="txt" style="font-size:12.5px;line-height:1.8;margin-top:4px">${wrongList.length?wrongList.join('<br>'):'暂无易错词，去答题吧～'}</div>
+      <div class="choices" style="margin-top:14px">
+        <button class="choice" onclick="renderChapterTask()">▶ 去测他的错题本</button>
+        <button class="choice" onclick="if(confirm('确定清空所有进度？')){localStorage.removeItem(PK);renderStats();}">清空进度</button>
+        <button class="choice" onclick="renderMenu()">返回菜单</button>
+      </div>
+    </div>`;
+}
+
+/* ============ 导入专属词表 ============ */
+function renderImport(){
+  curView='import';
+  root.innerHTML=`<div class="topbar"><button onclick="renderMenu()">主菜单</button><button onclick="renderDaily()">陪他夜读</button><button onclick="renderStats()">进度</button></div>
+    <div class="scene">
+      <div class="who">【导入专属词表】</div>
+      <div class="txt" style="font-size:13px;color:var(--dim);margin-bottom:8px">每行一个词，格式：「英文 中文」，例如：\n  affection 喜爱；感情\n  alleviate 减轻，缓和\n也可只写英文（释义留空）。保存后在剧情/夜读里选「导入」词源使用。</div>
+      <textarea id="imp" placeholder="affection 喜爱；感情&#10;alleviate 减轻，缓和"></textarea>
+      <div class="choices" style="margin-top:10px">
+        <button class="choice" onclick="doImport()">保存并返回菜单</button>
+        <button class="choice" onclick="renderMenu()">返回</button>
+      </div>
+    </div>`;
+}
+function doImport(){
+  const p=loadP(); p.custom=[];
+  const lines=(document.getElementById('imp').value||'').split('\n');
+  for(let ln of lines){ ln=ln.trim(); if(!ln) continue;
+    let en, zh='';
+    if(ln.indexOf('\t')>=0){ const a=ln.split('\t'); en=a[0].trim(); zh=a.slice(1).join(' ').trim(); }
+    else { const i=ln.indexOf(' '); if(i>0){ en=ln.slice(0,i).trim(); zh=ln.slice(i+1).trim(); } else en=ln; }
+    if(en) p.custom.push([en,'',zh]);
+  }
+  saveP(p); gSrc='custom'; renderMenu();
+}
+
+renderCover();
+</script>
+</body>
+</html>
