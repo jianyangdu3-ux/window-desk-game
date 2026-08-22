@@ -1,0 +1,13 @@
+{
+  "name": "窗边的长桌 · 考研背词",
+  "short_name": "长桌背词",
+  "description": "一个原创校园考研背词游戏，所有背词都发生在剧情里。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4c95d",
+  "theme_color": "#f4c95d",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
